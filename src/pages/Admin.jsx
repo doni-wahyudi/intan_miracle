@@ -90,6 +90,7 @@ export default function Admin() {
       });
 
       if (error) {
+        console.error("Auth error details:", error);
         setLoginError(error.message);
       } else {
         const adminEmails = ['intanmiracle@gmail.com', 'admin@intanmiracle.com'];
@@ -99,6 +100,7 @@ export default function Admin() {
         }
       }
     } catch (err) {
+      console.error("Catch auth error:", err);
       setLoginError(err.message || 'Terjadi kesalahan saat masuk.');
     } finally {
       setLoginLoading(false);
