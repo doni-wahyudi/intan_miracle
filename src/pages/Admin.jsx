@@ -335,8 +335,7 @@ export default function Admin() {
     layanan: { title: 'Manajemen Layanan', subtitle: 'Atur paket terapi, pijat, serta biaya layanan', hasAdd: true },
     galeri: { title: 'Galeri Kegiatan', subtitle: 'Kelola dokumentasi foto kebahagiaan ibu & bayi', hasAdd: true },
     testimoni: { title: 'Ulasan & Testimoni', subtitle: 'Kelola testimoni kehangatan pelanggan di website', hasAdd: true },
-    sertifikat: { title: 'Sertifikat & Lisensi', subtitle: 'Kelola dokumentasi bukti kompetensi profesionalisme owner', hasAdd: true },
-    database: { title: 'Setup Database Helper', subtitle: 'Inisialisasi tabel Supabase untuk fitur dinamis', hasAdd: false }
+    sertifikat: { title: 'Sertifikat & Lisensi', subtitle: 'Kelola dokumentasi bukti kompetensi profesionalisme owner', hasAdd: true }
   };
 
   // Format Helper
@@ -467,9 +466,6 @@ export default function Admin() {
           </button>
           <button className={`menu-item ${currentTab === 'sertifikat' ? 'active' : ''}`} onClick={() => { setCurrentTab('sertifikat'); setMobileSidebarActive(false); }}>
             <span className="menu-icon">📜</span> Kelola Sertifikat
-          </button>
-          <button className={`menu-item ${currentTab === 'database' ? 'active' : ''}`} onClick={() => { setCurrentTab('database'); setMobileSidebarActive(false); }}>
-            <span className="menu-icon">🛠️</span> Setup Database
           </button>
         </div>
         <div className="sidebar-footer">
@@ -785,125 +781,7 @@ export default function Admin() {
             </div>
           )}
 
-          {/* 8. DATABASE SETUP TAB */}
-          {currentTab === 'database' && (
-            <div className="tab-panel active">
-              <div className="admin-card sql-box-wrapper" style={{ padding: '32px' }}>
-                <p className="sql-desc">Supabase membutuhkan skema tabel dan kebijakan Row Level Security (RLS) di bawah ini untuk beroperasi secara dinamis. Silakan salin SQL dan jalankan di SQL Editor dashboard Supabase Anda.</p>
-                <div className="sql-code-container" style={{ position: 'relative', background: '#1e1e1e', padding: '24px', borderRadius: '16px' }}>
-                  <button 
-                    onClick={(e) => {
-                      const preElement = e.currentTarget.parentElement.querySelector('pre');
-                      navigator.clipboard.writeText(preElement.innerText);
-                      alert('✅ SQL disalin!');
-                    }} 
-                    className="copy-btn"
-                  >
-                    📋 Salin SQL
-                  </button>
-                  <pre className="sql-code">
-{`-- ============================================
--- INTAN MIRACLE CARE — Database Setup Schema
--- Run this in your Supabase SQL Editor to initialize.
--- ============================================
 
--- 1. Create articles table
-CREATE TABLE IF NOT EXISTS public.articles (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    title TEXT NOT NULL,
-    slug TEXT UNIQUE NOT NULL,
-    category TEXT NOT NULL,
-    summary TEXT NOT NULL,
-    content TEXT NOT NULL,
-    image_url TEXT NOT NULL,
-    author TEXT DEFAULT 'Bdn. Intan Purnama Sari, S.Keb., CBMT',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
--- 2. Create services table
-CREATE TABLE IF NOT EXISTS public.services (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    name TEXT NOT NULL,
-    category TEXT NOT NULL,
-    price NUMERIC NOT NULL,
-    description TEXT NOT NULL,
-    duration TEXT,
-    icon TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
--- 3. Create gallery table
-CREATE TABLE IF NOT EXISTS public.gallery (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    image_url TEXT NOT NULL,
-    caption TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
--- 4. Create testimonials table
-CREATE TABLE IF NOT EXISTS public.testimonials (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    author_name TEXT NOT NULL,
-    category TEXT NOT NULL,
-    content TEXT NOT NULL,
-    stars INTEGER DEFAULT 5,
-    avatar_initials TEXT,
-    avatar_bg TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
--- 5. Create certificates table
-CREATE TABLE IF NOT EXISTS public.certificates (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    image_url TEXT NOT NULL,
-    title TEXT NOT NULL,
-    sort_order INTEGER DEFAULT 0,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
--- ============================================
--- 6. Setup Storage Buckets
--- ============================================
-
--- Create public storage buckets
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('articles', 'articles', true)
-ON CONFLICT (id) DO NOTHING;
-
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('gallery', 'gallery', true)
-ON CONFLICT (id) DO NOTHING;
-
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('certificates', 'certificates', true)
-ON CONFLICT (id) DO NOTHING;
-
--- RLS Policies for Storage Buckets
--- Drop existing policies if they exist first
-DROP POLICY IF EXISTS "Public Read Objects" ON storage.objects;
-DROP POLICY IF EXISTS "Admin Insert Objects" ON storage.objects;
-DROP POLICY IF EXISTS "Admin Update Objects" ON storage.objects;
-DROP POLICY IF EXISTS "Admin Delete Objects" ON storage.objects;
-
--- Allow public select/read access to these buckets
-CREATE POLICY "Public Read Objects" ON storage.objects
-  FOR SELECT TO public USING (bucket_id IN ('articles', 'gallery', 'certificates'));
-
--- Allow authenticated users to perform insert, update, delete
-CREATE POLICY "Admin Insert Objects" ON storage.objects
-  FOR INSERT TO authenticated WITH CHECK (bucket_id IN ('articles', 'gallery', 'certificates'));
-
-CREATE POLICY "Admin Update Objects" ON storage.objects
-  FOR UPDATE TO authenticated USING (bucket_id IN ('articles', 'gallery', 'certificates'));
-
-CREATE POLICY "Admin Delete Objects" ON storage.objects
-  FOR DELETE TO authenticated USING (bucket_id IN ('articles', 'gallery', 'certificates'));
-`}
-                  </pre>
-                </div>
-              </div>
-            </div>
-          )}
 
         </div>
       </main>
