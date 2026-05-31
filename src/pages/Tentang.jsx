@@ -1,0 +1,441 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
+import useScrollAnimation from '../hooks/useScrollAnimation';
+
+export default function Tentang() {
+  const [certs, setCerts] = useState([]);
+  const [loadingCerts, setLoadingCerts] = useState(true);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxSrc, setLightboxSrc] = useState('');
+  const [lightboxAlt, setLightboxAlt] = useState('');
+
+  const certTrackRef = useRef(null);
+  const countersRef = useRef([]);
+
+  // Touch and Drag State
+  const startX = useRef(0);
+  const isDragging = useRef(false);
+  const autoplayTimer = useRef(null);
+
+  // Fallback Certificates
+  const fallbackCerts = [
+    { image_url: '/Sertifikat/Tangkapan Layar 2026-05-31 pukul 10.05.30.webp', title: 'Sertifikat CBMT - Certified Baby & Mom Therapist' },
+    { image_url: '/Sertifikat/Tangkapan Layar 2026-05-31 pukul 10.06.26.webp', title: 'Sertifikat Standarisasi Midwifery Update' },
+    { image_url: '/Sertifikat/Tangkapan Layar 2026-05-31 pukul 10.05.58.webp', title: 'Sertifikat Standarisasi Asuhan Persalinan Normal (APN)' },
+    { image_url: '/Sertifikat/Tangkapan Layar 2026-05-31 pukul 10.06.54.webp', title: 'Sertifikat Miracle Touch Holistic EFT' },
+    { image_url: '/Sertifikat/WhatsApp Image 2026-05-31 at 08.58.03.webp', title: 'Sertifikat Pencegahan & Penanganan Stunting' }
+  ];
+
+  const activeCerts = certs.length > 0 ? certs : fallbackCerts;
+
+  // Fetch Certificates
+  useEffect(() => {
+    async function fetchCertificates() {
+      try {
+        const { data, error } = await supabase
+          .from('certificates')
+          .select('*')
+          .order('sort_order', { ascending: true });
+        if (!error && data && data.length > 0) {
+          setCerts(data);
+        }
+      } catch (err) {
+        console.error('Error fetching certificates:', err);
+      } finally {
+        setLoadingCerts(false);
+      }
+    }
+    fetchCertificates();
+  }, []);
+
+  // Run scroll animations
+  useScrollAnimation([certs]);
+
+  // Autoplay functionality
+  const startAutoplay = () => {
+    stopAutoplay();
+    autoplayTimer.current = setInterval(() => {
+      setCurrentSlide(prev => (prev + 1) % activeCerts.length);
+    }, 5000);
+  };
+
+  const stopAutoplay = () => {
+    if (autoplayTimer.current) {
+      clearInterval(autoplayTimer.current);
+    }
+  };
+
+  useEffect(() => {
+    startAutoplay();
+    return () => stopAutoplay();
+  }, [activeCerts.length]);
+
+  // Next / Prev slide handlers
+  const nextSlide = () => {
+    stopAutoplay();
+    setCurrentSlide(prev => (prev + 1) % activeCerts.length);
+    startAutoplay();
+  };
+
+  const prevSlide = () => {
+    stopAutoplay();
+    setCurrentSlide(prev => (prev - 1 + activeCerts.length) % activeCerts.length);
+    startAutoplay();
+  };
+
+  // Drag and Swipe logic
+  const handleDragStart = (xPos) => {
+    startX.current = xPos;
+    isDragging.current = true;
+    stopAutoplay();
+  };
+
+  const handleDragEnd = (endX) => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    const diff = startX.current - endX;
+
+    if (Math.abs(diff) > 60) {
+      if (diff > 0) {
+        nextSlide();
+      } else {
+        prevSlide();
+      }
+    } else {
+      startAutoplay();
+    }
+  };
+
+  // Lightbox handlers
+  const openLightbox = (src, alt) => {
+    setLightboxSrc(src);
+    setLightboxAlt(alt);
+    setLightboxOpen(true);
+    document.body.style.overflow = 'hidden';
+    stopAutoplay();
+  };
+
+  const closeLightbox = () => {
+    setLightboxOpen(false);
+    document.body.style.overflow = '';
+    startAutoplay();
+  };
+
+  // Counter animations
+  useEffect(() => {
+    const targets = countersRef.current;
+    if (targets.length === 0) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const targetEl = entry.target;
+          const targetVal = parseInt(targetEl.getAttribute('data-count'), 10);
+          let currentVal = 0;
+          const increment = targetVal / 40;
+
+          const timer = setInterval(() => {
+            currentVal += increment;
+            if (currentVal >= targetVal) {
+              currentVal = targetVal;
+              clearInterval(timer);
+            }
+            targetEl.textContent = Math.floor(currentVal) + '+';
+          }, 30);
+
+          observer.unobserve(targetEl);
+        }
+      });
+    }, { threshold: 0.5 });
+
+    targets.forEach(target => {
+      if (target) observer.observe(target);
+    });
+
+    return () => {
+      targets.forEach(target => {
+        if (target) observer.unobserve(target);
+      });
+    };
+  }, []);
+
+  return (
+    <div>
+      {/* Page Header */}
+      <section className="page-header">
+        <div className="container">
+          <h1 className="text-gradient">Tentang Kami</h1>
+          <p>Mengenal lebih dekat Intan Miracle dan komitmen kami untuk ibu dan bayi</p>
+        </div>
+      </section>
+
+      {/* Siapa Kami */}
+      <section className="section">
+        <div className="container">
+          <div className="about-intro">
+            <div className="about-intro-visual animate-on-scroll">
+              <div className="about-blob"></div>
+              <img src="/Image/PP 2.webp" alt="Intan Miracle Profil" className="about-photo" />
+            </div>
+            <div className="about-text animate-on-scroll">
+              <h2>Siapa Kami</h2>
+              <p>
+                <strong>Intan Miracle</strong> adalah layanan Mom and Baby Care yang berfokus pada
+                kesehatan, kenyamanan, dan pemulihan ibu serta stimulasi tumbuh kembang bayi melalui metode
+                perawatan yang aman dan profesional.
+              </p>
+              <p style={{ marginTop: '16px' }}>
+                Kami percaya bahwa setiap ibu dan bayi berhak mendapatkan perawatan terbaik. Dengan terapis
+                berpengalaman dan pendekatan penuh empati, kami hadir sebagai mitra terpercaya di masa-masa
+                paling berharga dalam hidup Anda.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Profil Owner & Terapis */}
+      <section className="section section-alt">
+        <div className="container">
+          <div className="section-header animate-on-scroll">
+            <h2>Pendiri & Terapis</h2>
+            <p>Kenali sosok di balik Intan Miracle</p>
+          </div>
+          <div className="owner-profile animate-on-scroll">
+            <div className="owner-photo-wrapper">
+              <div className="owner-photo-frame">
+                <img src="/Image/Foto Owner.webp" alt="Bdn. Intan Purnama Sari, S.Keb., CBMT" className="owner-photo" />
+              </div>
+              <div className="owner-badge">
+                <span>👩‍⚕️</span> Certified Baby & Mom Therapist
+              </div>
+            </div>
+            <div className="owner-bio">
+              <h3>Bdn. Intan Purnama Sari, S.Keb., CBMT</h3>
+              <div className="owner-title">Owner & Lead Therapist — Intan Miracle</div>
+              <p>
+                <strong>Bdn. Intan Purnama Sari, S.Keb., CBMT</strong> adalah seorang bidan profesional yang
+                telah mendedikasikan dirinya di dunia kesehatan ibu dan anak sejak tahun 2017. Guna memberikan
+                perawatan yang lebih optimal dan terspesialisasi, beliau juga memperdalam keahliannya dengan
+                mengambil sertifikasi <em>Certified Baby and Mom Therapist</em> pada tahun 2019.
+              </p>
+              <p>
+                Dengan pengalaman hampir satu dekade, Bidan Intan telah sukses menangani lebih dari
+                <strong> 1.000 tindakan</strong> yang mencakup penanganan persalinan, pemeriksaan kehamilan,
+                perawatan bayi baru lahir, hingga perawatan ibu nifas. Selain tindakan medis kebidanan seperti
+                imunisasi, KB, dan tindik steril, beliau juga sangat ahli dalam memberikan terapi relaksasi
+                seperti pijat bayi, baby spa, serta pijat laktasi untuk membantu kelancaran ASI para busui.
+              </p>
+              <p>
+                Kombinasi antara ilmu kebidanan resmi dan keahlian terapi bersertifikat ini menjadikannya sosok
+                yang siap memberikan perawatan terbaik, aman, dan penuh kasih sayang untuk Anda dan Si Kecil.
+              </p>
+              <div className="owner-highlights">
+                <div className="owner-highlight-item">
+                  <span className="highlight-icon">🎓</span>
+                  <span>Bidan Profesional sejak 2017</span>
+                </div>
+                <div className="owner-highlight-item">
+                  <span className="highlight-icon">📜</span>
+                  <span>Sertifikasi CBMT sejak 2019</span>
+                </div>
+                <div className="owner-highlight-item">
+                  <span className="highlight-icon">💪</span>
+                  <span>1.000+ Tindakan Berhasil</span>
+                </div>
+                <div className="owner-highlight-item">
+                  <span className="highlight-icon">💗</span>
+                  <span>Penuh Kasih Sayang</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Sertifikat */}
+      <section className="section">
+        <div className="container">
+          <div className="section-header animate-on-scroll">
+            <h2>Sertifikat & Lisensi</h2>
+            <p>Bukti kompetensi dan profesionalisme dalam memberikan layanan terbaik</p>
+          </div>
+          <div className="cert-carousel animate-on-scroll">
+            <div 
+              className="cert-track" 
+              ref={certTrackRef}
+              style={{ 
+                transform: `translateX(-${currentSlide * 100}%)`,
+                transition: isDragging.current ? 'none' : 'transform 0.5s ease-in-out'
+              }}
+              onMouseDown={(e) => handleDragStart(e.clientX)}
+              onMouseUp={(e) => handleDragEnd(e.clientX)}
+              onMouseLeave={() => { if (isDragging.current) { isDragging.current = false; startAutoplay(); } }}
+              onTouchStart={(e) => handleDragStart(e.touches[0].clientX)}
+              onTouchEnd={(e) => handleDragEnd(e.changedTouches[0].clientX)}
+            >
+              {activeCerts.map((cert, index) => (
+                <div 
+                  className="cert-slide" 
+                  key={index}
+                  onClick={() => openLightbox(cert.image_url, cert.title)}
+                >
+                  <img src={cert.image_url} alt={cert.title} draggable="false" />
+                </div>
+              ))}
+            </div>
+            
+            <button className="cert-nav cert-prev" onClick={prevSlide} aria-label="Sebelumnya">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <button className="cert-nav cert-next" onClick={nextSlide} aria-label="Berikutnya">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+
+            <div className="cert-dots">
+              {activeCerts.map((_, index) => (
+                <button
+                  key={index}
+                  className={`cert-dot ${currentSlide === index ? 'active' : ''}`}
+                  onClick={() => {
+                    stopAutoplay();
+                    setCurrentSlide(index);
+                    startAutoplay();
+                  }}
+                  aria-label={`Sertifikat ${index + 1}`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Lightbox Overlay */}
+      {lightboxOpen && (
+        <div className="cert-lightbox active" onClick={closeLightbox}>
+          <button className="cert-lightbox-close" onClick={closeLightbox} aria-label="Tutup">&times;</button>
+          <img src={lightboxSrc} alt={lightboxAlt} onClick={(e) => e.stopPropagation()} />
+        </div>
+      )}
+
+      {/* Visi & Misi */}
+      <section className="section section-alt">
+        <div className="container">
+          <div className="section-header animate-on-scroll">
+            <h2>Visi & Misi Kami</h2>
+            <p>Fondasi yang menjadi landasan setiap layanan kami</p>
+          </div>
+          <div className="vision-mission">
+            <div className="vm-card animate-on-scroll">
+              <div style={{ fontSize: '2.5rem', marginBottom: '16px' }}>🔭</div>
+              <h3>Visi</h3>
+              <p>Menjadi sahabat terbaik ibu dalam merawat dan mendampingi bayi di masa awal kehidupan.</p>
+            </div>
+            <div className="vm-card animate-on-scroll">
+              <div style={{ fontSize: '2.5rem', marginBottom: '16px' }}>🎯</div>
+              <h3>Misi</h3>
+              <ul>
+                <li>Memberikan perawatan berkualitas dan aman</li>
+                <li>Mengedepankan pendekatan lembut dan penuh empati</li>
+                <li>Mendukung pemulihan ibu setelah melahirkan</li>
+                <li>Membantu tumbuh kembang bayi secara optimal</li>
+                <li>Memberikan edukasi dasar perawatan bayi kepada orang tua</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Nilai Kami */}
+      <section className="section">
+        <div className="container">
+          <div className="section-header animate-on-scroll">
+            <h2>Nilai-Nilai Kami</h2>
+            <p>Prinsip yang kami pegang teguh dalam setiap layanan</p>
+          </div>
+          <div className="values-grid">
+            <div className="value-item animate-on-scroll">
+              <div className="value-icon">💗</div>
+              <h4>Cinta</h4>
+            </div>
+            <div className="value-item animate-on-scroll">
+              <div className="value-icon">🛡️</div>
+              <h4>Keamanan</h4>
+            </div>
+            <div className="value-item animate-on-scroll">
+              <div className="value-icon">👩‍⚕️</div>
+              <h4>Profesionalisme</h4>
+            </div>
+            <div className="value-item animate-on-scroll">
+              <div className="value-icon">✨</div>
+              <h4>Kenyamanan</h4>
+            </div>
+            <div className="value-item animate-on-scroll">
+              <div className="value-icon">🤍</div>
+              <h4>Kepercayaan</h4>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats */}
+      <section className="section section-pink">
+        <div className="container">
+          <div className="grid-4" style={{ textAlign: 'center' }}>
+            <div className="animate-on-scroll">
+              <div 
+                ref={el => countersRef.current[0] = el}
+                style={{ fontSize: '2.5rem', fontFamily: "'Outfit', sans-serif", fontWeight: 800, color: 'var(--pink-600)' }}
+                data-count="500"
+              >
+                0+
+              </div>
+              <p style={{ color: 'var(--text-secondary)', fontWeight: 500, marginTop: '8px' }}>Ibu & Bayi Terlayani</p>
+            </div>
+            <div className="animate-on-scroll">
+              <div 
+                ref={el => countersRef.current[1] = el}
+                style={{ fontSize: '2.5rem', fontFamily: "'Outfit', sans-serif", fontWeight: 800, color: 'var(--pink-600)' }}
+                data-count="15"
+              >
+                0+
+              </div>
+              <p style={{ color: 'var(--text-secondary)', fontWeight: 500, marginTop: '8px' }}>Layanan Tersedia</p>
+            </div>
+            <div className="animate-on-scroll">
+              <div 
+                ref={el => countersRef.current[2] = el}
+                style={{ fontSize: '2.5rem', fontFamily: "'Outfit', sans-serif", fontWeight: 800, color: 'var(--pink-600)' }}
+                data-count="6"
+              >
+                0+
+              </div>
+              <p style={{ color: 'var(--text-secondary)', fontWeight: 500, marginTop: '8px' }}>Tahun Pengalaman</p>
+            </div>
+            <div className="animate-on-scroll">
+              <div 
+                ref={el => countersRef.current[3] = el}
+                style={{ fontSize: '2.5rem', fontFamily: "'Outfit', sans-serif", fontWeight: 800, color: 'var(--pink-600)' }}
+                data-count="100"
+              >
+                0+
+              </div>
+              <p style={{ color: 'var(--text-secondary)', fontWeight: 500, marginTop: '8px' }}>Testimoni Positif</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="cta-section">
+        <div className="container">
+          <h2>Siap Merasakan Perawatan Terbaik?</h2>
+          <p>Hubungi kami sekarang dan rasakan perbedaannya.</p>
+          <Link to="/reservasi" className="btn btn-lg">👉 Reservasi Sekarang</Link>
+        </div>
+      </section>
+    </div>
+  );
+}
