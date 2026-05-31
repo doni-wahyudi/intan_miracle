@@ -5,10 +5,19 @@ export default function useScrollAnimation(triggerDeps = []) {
     const animateElements = document.querySelectorAll('.animate-on-scroll');
     if (animateElements.length === 0) return;
 
+    const fallbackTimeout = setTimeout(() => {
+      animateElements.forEach((el) => {
+        if (!el.classList.contains('visible')) {
+          el.classList.add('visible');
+        }
+      });
+    }, 400);
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
+            clearTimeout(fallbackTimeout);
             entry.target.classList.add('visible');
             observer.unobserve(entry.target);
           }
@@ -26,6 +35,7 @@ export default function useScrollAnimation(triggerDeps = []) {
     });
 
     return () => {
+      clearTimeout(fallbackTimeout);
       animateElements.forEach((el) => observer.unobserve(el));
     };
   }, triggerDeps);
