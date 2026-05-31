@@ -33,22 +33,120 @@ export default function Admin() {
   // Dynamic Form Field States
   const [formFields, setFormFields] = useState({});
 
+  // Uploading State
+  const [uploading, setUploading] = useState(false);
+
+  // Admin Login States
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
+
   // Verify Admin Access
   useEffect(() => {
+    // Check initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) {
+      handleSession(session);
+    });
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      handleSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSession = (session) => {
+    setSession(session);
+    if (session) {
+      const adminEmails = ['intanmiracle@gmail.com', 'admin@intanmiracle.com'];
+      if (adminEmails.includes(session.user.email.toLowerCase())) {
+        setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
+      }
+    } else {
+      setIsAdmin(false);
+    }
+    setAuthLoading(false);
+  };
+
+  useEffect(() => {
+    if (isAdmin) {
+      loadTabInitialData(currentTab);
+    }
+  }, [currentTab, isAdmin]);
+
+  const handleAdminLogin = async (e) => {
+    e.preventDefault();
+    setLoginError('');
+    setLoginLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        setLoginError(error.message);
+      } else {
         const adminEmails = ['intanmiracle@gmail.com', 'admin@intanmiracle.com'];
-        if (adminEmails.includes(session.user.email.toLowerCase())) {
-          setIsAdmin(true);
-          loadTabInitialData(currentTab);
-        } else {
-          setIsAdmin(false);
+        if (!adminEmails.includes(data.user.email.toLowerCase())) {
+          setLoginError('Akses ditolak: Akun Anda bukan Administrator.');
+          await supabase.auth.signOut();
         }
       }
-      setAuthLoading(false);
-    });
-  }, [currentTab]);
+    } catch (err) {
+      setLoginError(err.message || 'Terjadi kesalahan saat masuk.');
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  // Handle image upload to Supabase Storage
+  const handleImageUpload = async (e, bucketName) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('❌ Hanya file gambar yang diperbolehkan!');
+        setUploading(false);
+        return;
+      }
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { data, error } = await supabase.storage
+        .from(bucketName)
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from(bucketName)
+        .getPublicUrl(filePath);
+
+      updateField('image_url', publicUrlData.publicUrl);
+      alert('✅ Gambar berhasil diunggah!');
+    } catch (err) {
+      console.error('Error uploading image:', err);
+      alert('❌ Gagal mengunggah gambar: ' + err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const loadTabInitialData = (tab) => {
     switch (tab) {
@@ -259,15 +357,72 @@ export default function Admin() {
     );
   }
 
-  // Redirect / lock if not authorized
+  // If not logged in, show Admin Login form
+  if (!session) {
+    return (
+      <div style={{ padding: '100px 20px', minHeight: '100vh', background: '#fcf8f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="auth-card" style={{ maxWidth: '420px', width: '100%', margin: '0 auto', padding: '40px', background: 'white', borderRadius: '24px', boxShadow: '0 10px 25px rgba(236, 72, 153, 0.05)', border: '1px solid rgba(236, 72, 153, 0.1)' }}>
+          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+            <img src={img('/Image/LOGO INTAN MIRACLE colour italic.webp')} alt="Intan Miracle Logo" style={{ maxHeight: '60px', marginBottom: '16px' }} />
+            <h2 style={{ fontSize: '1.8rem', color: 'var(--text-primary)' }}>Dashboard Admin</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Masuk dengan kredensial Administrator Anda</p>
+          </div>
+          <form onSubmit={handleAdminLogin}>
+            <div className="form-group" style={{ marginBottom: '20px' }}>
+              <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Email Admin</label>
+              <input 
+                type="email" 
+                className="form-control"
+                placeholder="admin@intanmiracle.com" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required 
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '24px' }}>
+              <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Kata Sandi</label>
+              <input 
+                type="password" 
+                className="form-control"
+                placeholder="••••••••" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required 
+              />
+            </div>
+            {loginError && (
+              <p style={{ color: '#ef4444', fontSize: '0.85rem', textAlign: 'center', marginBottom: '16px', background: '#fee2e2', padding: '10px', borderRadius: '8px' }}>
+                ❌ {loginError}
+              </p>
+            )}
+            <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '14px' }} disabled={loginLoading}>
+              {loginLoading ? 'Memproses Masuk...' : 'Masuk Dashboard'}
+            </button>
+          </form>
+          <div style={{ textAlign: 'center', marginTop: '20px' }}>
+            <Link to="/" style={{ color: 'var(--pink-600)', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 600 }}>🌐 Kembali ke Beranda</Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If logged in but NOT admin (e.g. member email is active)
   if (!isAdmin) {
     return (
-      <div style={{ padding: '160px 0', textAlign: 'center', minHeight: '100vh', background: '#fcf8f9' }}>
-        <div style={{ maxWidth: '420px', margin: '0 auto', padding: '40px', background: 'white', borderRadius: '24px', border: '1px solid rgba(236, 72, 153, 0.1)' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🔒</div>
-          <h2>Akses Terbatas</h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '12px 0 24px', lineHeight: 1.6 }}>Halaman ini hanya dapat diakses oleh akun Administrator berwenang.</p>
-          <Link to="/member" className="btn btn-primary" style={{ display: 'inline-block' }}>Masuk Member Area</Link>
+      <div style={{ padding: '100px 20px', minHeight: '100vh', background: '#fcf8f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ maxWidth: '420px', width: '100%', margin: '0 auto', padding: '40px', background: 'white', borderRadius: '24px', border: '1px solid rgba(236, 72, 153, 0.1)', textAlign: 'center', boxShadow: '0 10px 25px rgba(236, 72, 153, 0.05)' }}>
+          <div style={{ fontSize: '4rem', marginBottom: '16px' }}>🔒</div>
+          <h2 style={{ fontSize: '1.8rem', color: 'var(--text-primary)' }}>Akses Terbatas</h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '12px 0 24px', lineHeight: 1.6, fontSize: '0.95rem' }}>
+            Akun Anda (<strong>{session.user.email}</strong>) tidak memiliki izin akses Administrator.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <button onClick={async () => { await supabase.auth.signOut(); }} className="btn btn-primary">
+              🚪 Keluar & Gunakan Akun Lain
+            </button>
+            <Link to="/" className="btn btn-secondary">🌐 Kembali ke Beranda</Link>
+          </div>
         </div>
       </div>
     );
@@ -634,9 +789,9 @@ export default function Admin() {
                 <p className="sql-desc">Supabase membutuhkan skema tabel dan kebijakan Row Level Security (RLS) di bawah ini untuk beroperasi secara dinamis. Silakan salin SQL dan jalankan di SQL Editor dashboard Supabase Anda.</p>
                 <div className="sql-code-container" style={{ position: 'relative', background: '#1e1e1e', padding: '24px', borderRadius: '16px' }}>
                   <button 
-                    onClick={() => {
-                      const sql = `-- Run this in your Supabase SQL Editor...`;
-                      navigator.clipboard.writeText(sql);
+                    onClick={(e) => {
+                      const preElement = e.currentTarget.parentElement.querySelector('pre');
+                      navigator.clipboard.writeText(preElement.innerText);
                       alert('✅ SQL disalin!');
                     }} 
                     className="copy-btn"
@@ -701,7 +856,46 @@ CREATE TABLE IF NOT EXISTS public.certificates (
     title TEXT NOT NULL,
     sort_order INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);`}
+);
+
+-- ============================================
+-- 6. Setup Storage Buckets
+-- ============================================
+
+-- Create public storage buckets
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('articles', 'articles', true)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('gallery', 'gallery', true)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('certificates', 'certificates', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- RLS Policies for Storage Buckets
+-- Drop existing policies if they exist first
+DROP POLICY IF EXISTS "Public Read Objects" ON storage.objects;
+DROP POLICY IF EXISTS "Admin Insert Objects" ON storage.objects;
+DROP POLICY IF EXISTS "Admin Update Objects" ON storage.objects;
+DROP POLICY IF EXISTS "Admin Delete Objects" ON storage.objects;
+
+-- Allow public select/read access to these buckets
+CREATE POLICY "Public Read Objects" ON storage.objects
+  FOR SELECT TO public USING (bucket_id IN ('articles', 'gallery', 'certificates'));
+
+-- Allow authenticated users to perform insert, update, delete
+CREATE POLICY "Admin Insert Objects" ON storage.objects
+  FOR INSERT TO authenticated WITH CHECK (bucket_id IN ('articles', 'gallery', 'certificates'));
+
+CREATE POLICY "Admin Update Objects" ON storage.objects
+  FOR UPDATE TO authenticated USING (bucket_id IN ('articles', 'gallery', 'certificates'));
+
+CREATE POLICY "Admin Delete Objects" ON storage.objects
+  FOR DELETE TO authenticated USING (bucket_id IN ('articles', 'gallery', 'certificates'));
+`}
                   </pre>
                 </div>
               </div>
@@ -749,8 +943,32 @@ CREATE TABLE IF NOT EXISTS public.certificates (
                       <input type="text" className="form-control" value={formFields.summary || ''} onChange={(e) => updateField('summary', e.target.value)} required />
                     </div>
                     <div className="form-group">
-                      <label>URL Gambar</label>
-                      <input type="text" className="form-control" value={formFields.image_url || ''} onChange={(e) => updateField('image_url', e.target.value)} required />
+                      <label>Gambar Banner</label>
+                      {formFields.image_url && (
+                        <div style={{ marginBottom: '10px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e2e8f0', width: '120px', height: '80px' }}>
+                          <img src={formFields.image_url} alt="Pratinjau" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={(e) => handleImageUpload(e, 'articles')}
+                            disabled={uploading}
+                            style={{ fontSize: '0.85rem' }}
+                          />
+                        </div>
+                        {uploading && <span style={{ fontSize: '0.8rem', color: 'var(--pink-600)' }}>⏳ Sedang mengunggah ke bucket 'articles'...</span>}
+                        <input 
+                          type="text" 
+                          className="form-control" 
+                          placeholder="Atau tempel URL gambar di sini" 
+                          value={formFields.image_url || ''} 
+                          onChange={(e) => updateField('image_url', e.target.value)} 
+                          required 
+                        />
+                      </div>
                     </div>
                     <div className="form-group">
                       <label>Isi Lengkap Artikel (Mendukung HTML)</label>
@@ -796,8 +1014,32 @@ CREATE TABLE IF NOT EXISTS public.certificates (
                 {currentTab === 'galeri' && (
                   <>
                     <div className="form-group">
-                      <label>URL Gambar</label>
-                      <input type="text" className="form-control" value={formFields.image_url || ''} onChange={(e) => updateField('image_url', e.target.value)} required />
+                      <label>Gambar Galeri</label>
+                      {formFields.image_url && (
+                        <div style={{ marginBottom: '10px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e2e8f0', width: '100px', height: '100px' }}>
+                          <img src={formFields.image_url} alt="Pratinjau" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={(e) => handleImageUpload(e, 'gallery')}
+                            disabled={uploading}
+                            style={{ fontSize: '0.85rem' }}
+                          />
+                        </div>
+                        {uploading && <span style={{ fontSize: '0.8rem', color: 'var(--pink-600)' }}>⏳ Sedang mengunggah ke bucket 'gallery'...</span>}
+                        <input 
+                          type="text" 
+                          className="form-control" 
+                          placeholder="Atau tempel URL gambar di sini" 
+                          value={formFields.image_url || ''} 
+                          onChange={(e) => updateField('image_url', e.target.value)} 
+                          required 
+                        />
+                      </div>
                     </div>
                     <div className="form-group">
                       <label>Caption Foto (Opsional)</label>
@@ -844,8 +1086,32 @@ CREATE TABLE IF NOT EXISTS public.certificates (
                       <input type="text" className="form-control" value={formFields.title || ''} onChange={(e) => updateField('title', e.target.value)} required />
                     </div>
                     <div className="form-group">
-                      <label>URL Gambar</label>
-                      <input type="text" className="form-control" value={formFields.image_url || ''} onChange={(e) => updateField('image_url', e.target.value)} required />
+                      <label>Gambar Sertifikat</label>
+                      {formFields.image_url && (
+                        <div style={{ marginBottom: '10px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e2e8f0', width: '120px', height: '80px', background: '#fff' }}>
+                          <img src={formFields.image_url} alt="Pratinjau" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '4px' }} />
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={(e) => handleImageUpload(e, 'certificates')}
+                            disabled={uploading}
+                            style={{ fontSize: '0.85rem' }}
+                          />
+                        </div>
+                        {uploading && <span style={{ fontSize: '0.8rem', color: 'var(--pink-600)' }}>⏳ Sedang mengunggah ke bucket 'certificates'...</span>}
+                        <input 
+                          type="text" 
+                          className="form-control" 
+                          placeholder="Atau tempel URL gambar di sini" 
+                          value={formFields.image_url || ''} 
+                          onChange={(e) => updateField('image_url', e.target.value)} 
+                          required 
+                        />
+                      </div>
                     </div>
                     <div className="form-group">
                       <label>Urutan Urut (Mulai dari 0)</label>
