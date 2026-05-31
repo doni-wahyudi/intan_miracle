@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { img } from '../utils/imageUrl';
+import './Admin.css';
 
 export default function Admin() {
   const navigate = useNavigate();
