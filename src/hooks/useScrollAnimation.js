@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 export default function useScrollAnimation(triggerDeps = []) {
   useEffect(() => {
     const animateElements = document.querySelectorAll('.animate-on-scroll');
+    console.log("[useScrollAnimation] Triggered. Found elements:", animateElements.length);
     if (animateElements.length === 0) return;
 
     const fallbackTimeout = setTimeout(() => {

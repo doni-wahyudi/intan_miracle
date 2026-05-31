@@ -167,7 +167,7 @@ export default function Member() {
         <div className="container">
           {!session ? (
             /* Auth Login/Register View */
-            <div className="auth-card animate-on-scroll" style={{ maxWidth: '500px', margin: '0 auto' }}>
+            <div className="auth-card" style={{ maxWidth: '500px', margin: '0 auto' }}>
               <div className="auth-tabs">
                 <button 
                   className={`auth-tab ${activeTab === 'login' ? 'active' : ''}`}
@@ -256,7 +256,7 @@ export default function Member() {
             </div>
           ) : (
             /* Logged In Profile View */
-            <div className="profile-card animate-on-scroll" style={{ maxWidth: '800px', margin: '0 auto' }}>
+            <div className="profile-card" style={{ maxWidth: '800px', margin: '0 auto' }}>
               <div className="profile-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap', gap: '16px' }}>
                 <div>
                   <h2>Halo, <span id="displayNamaIbu">{namaIbu || 'Member'}</span>! 👋</h2>
