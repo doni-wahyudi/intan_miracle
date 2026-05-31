@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import { img } from '../utils/imageUrl';
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -285,7 +286,7 @@ export default function Admin() {
       {/* Sidebar */}
       <aside className={`admin-sidebar ${mobileSidebarActive ? 'active' : ''}`} style={{ display: 'flex', flexDirection: 'column' }}>
         <div className="sidebar-brand">
-          <img src="/Image/LOGO INTAN MIRACLE colour italic.webp" alt="Intan Miracle Logo" />
+          <img src={img('/Image/LOGO INTAN MIRACLE colour italic.webp')} alt="Intan Miracle Logo" />
         </div>
         <div className="sidebar-menu">
           <button className={`menu-item ${currentTab === 'reservasi' ? 'active' : ''}`} onClick={() => { setCurrentTab('reservasi'); setMobileSidebarActive(false); }}>

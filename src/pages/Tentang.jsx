@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import useScrollAnimation from '../hooks/useScrollAnimation';
+import { img } from '../utils/imageUrl';
 
 export default function Tentang() {
   const [certs, setCerts] = useState([]);
@@ -21,11 +22,11 @@ export default function Tentang() {
 
   // Fallback Certificates
   const fallbackCerts = [
-    { image_url: '/Sertifikat/Tangkapan Layar 2026-05-31 pukul 10.05.30.webp', title: 'Sertifikat CBMT - Certified Baby & Mom Therapist' },
-    { image_url: '/Sertifikat/Tangkapan Layar 2026-05-31 pukul 10.06.26.webp', title: 'Sertifikat Standarisasi Midwifery Update' },
-    { image_url: '/Sertifikat/Tangkapan Layar 2026-05-31 pukul 10.05.58.webp', title: 'Sertifikat Standarisasi Asuhan Persalinan Normal (APN)' },
-    { image_url: '/Sertifikat/Tangkapan Layar 2026-05-31 pukul 10.06.54.webp', title: 'Sertifikat Miracle Touch Holistic EFT' },
-    { image_url: '/Sertifikat/WhatsApp Image 2026-05-31 at 08.58.03.webp', title: 'Sertifikat Pencegahan & Penanganan Stunting' }
+    { image_url: img('/Sertifikat/Tangkapan Layar 2026-05-31 pukul 10.05.30.webp'), title: 'Sertifikat CBMT - Certified Baby & Mom Therapist' },
+    { image_url: img('/Sertifikat/Tangkapan Layar 2026-05-31 pukul 10.06.26.webp'), title: 'Sertifikat Standarisasi Midwifery Update' },
+    { image_url: img('/Sertifikat/Tangkapan Layar 2026-05-31 pukul 10.05.58.webp'), title: 'Sertifikat Standarisasi Asuhan Persalinan Normal (APN)' },
+    { image_url: img('/Sertifikat/Tangkapan Layar 2026-05-31 pukul 10.06.54.webp'), title: 'Sertifikat Miracle Touch Holistic EFT' },
+    { image_url: img('/Sertifikat/WhatsApp Image 2026-05-31 at 08.58.03.webp'), title: 'Sertifikat Pencegahan & Penanganan Stunting' }
   ];
 
   const activeCerts = certs.length > 0 ? certs : fallbackCerts;
@@ -177,7 +178,7 @@ export default function Tentang() {
           <div className="about-intro">
             <div className="about-intro-visual animate-on-scroll">
               <div className="about-blob"></div>
-              <img src="/Image/PP 2.webp" alt="Intan Miracle Profil" className="about-photo" />
+              <img src={img('/Image/PP 2.webp')} alt="Intan Miracle Profil" className="about-photo" />
             </div>
             <div className="about-text animate-on-scroll">
               <h2>Siapa Kami</h2>
@@ -206,7 +207,7 @@ export default function Tentang() {
           <div className="owner-profile animate-on-scroll">
             <div className="owner-photo-wrapper">
               <div className="owner-photo-frame">
-                <img src="/Image/Foto Owner.webp" alt="Bdn. Intan Purnama Sari, S.Keb., CBMT" className="owner-photo" />
+                <img src={img('/Image/Foto Owner.webp')} alt="Bdn. Intan Purnama Sari, S.Keb., CBMT" className="owner-photo" />
               </div>
               <div className="owner-badge">
                 <span>👩‍⚕️</span> Certified Baby & Mom Therapist

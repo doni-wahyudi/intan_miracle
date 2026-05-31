@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import useScrollAnimation from '../hooks/useScrollAnimation';
+import { img } from '../utils/imageUrl';
 
 export default function Testimoni() {
   const [dbTestimonials, setDbTestimonials] = useState([]);
@@ -79,7 +80,7 @@ export default function Testimoni() {
   ];
 
   // Screenshot items (13 files)
-  const screenshots = Array.from({ length: 13 }, (_, i) => `/Image/Testimoni Screenshoot/${i + 16}.webp`);
+  const screenshots = Array.from({ length: 13 }, (_, i) => img(`/Image/Testimoni Screenshoot/${i + 16}.webp`));
 
   // Fetch Testimonials
   useEffect(() => {

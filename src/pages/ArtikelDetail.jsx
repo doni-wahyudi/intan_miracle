@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import useScrollAnimation from '../hooks/useScrollAnimation';
+import { img } from '../utils/imageUrl';
 
 export default function ArtikelDetail() {
   const { slug } = useParams();
@@ -50,7 +51,7 @@ export default function ArtikelDetail() {
     logoHeader.id = 'pdf-logo-header';
     logoHeader.style.cssText = 'display: flex; align-items: center; padding: 20px 28px; border-bottom: 2px solid #e8a0b4; background: white;';
     logoHeader.innerHTML = `
-      <img src="/Image/LOGO INTAN MIRACLE colour italic.webp" style="height: 45px; margin-right: 14px;">
+      <img src="${img('/Image/LOGO INTAN MIRACLE colour italic.webp')}" style="height: 45px; margin-right: 14px;">
       <div>
         <div style="font-size: 0.78rem; color: #999; margin-top: 2px;">www.intanmiracle.com</div>
       </div>
@@ -63,7 +64,7 @@ export default function ArtikelDetail() {
     if (imgDiv) {
       logoOverlay = document.createElement('img');
       logoOverlay.id = 'pdf-logo-overlay';
-      logoOverlay.src = '/Image/LOGO INTAN MIRACLE colour italic.webp';
+      logoOverlay.src = img('/Image/LOGO INTAN MIRACLE colour italic.webp');
       logoOverlay.style.cssText = 'position: absolute; top: 12px; left: 12px; height: 40px; background: rgba(255,255,255,0.85); padding: 6px 10px; border-radius: 8px; z-index: 5;';
       imgDiv.style.position = 'relative';
       imgDiv.appendChild(logoOverlay);
@@ -143,7 +144,7 @@ export default function ArtikelDetail() {
           {showStaticTandaBahaya ? (
             <div className="featured-article animate-on-scroll">
               <div className="featured-article-image">
-                <img src="/Image/tanda-bahaya-kehamilan.webp" alt="Ibu hamil - tanda bahaya kehamilan" />
+                <img src={img('/Image/tanda-bahaya-kehamilan.webp')} alt="Ibu hamil - tanda bahaya kehamilan" />
               </div>
               <div className="featured-article-body" style={{ position: 'relative' }}>
                 <button 

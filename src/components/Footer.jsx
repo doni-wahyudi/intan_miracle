@@ -1,4 +1,5 @@
 import React from 'react';
+import { img } from '../utils/imageUrl';
 
 export default function Footer() {
   return (
@@ -7,7 +8,7 @@ export default function Footer() {
         <div className="footer-grid">
           {/* Part 1: Logo */}
           <div className="footer-logo">
-            <img src="/Image/PP 2.webp" alt="Intan Miracle Logo" className="logo-image-footer-large" />
+            <img src={img('/Image/PP 2.webp')} alt="Intan Miracle Logo" className="logo-image-footer-large" />
           </div>
 
           {/* Part 2: Description & Social Media */}

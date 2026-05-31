@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import useScrollAnimation from '../hooks/useScrollAnimation';
+import { img } from '../utils/imageUrl';
 
 export default function Artikel() {
   const [articles, setArticles] = useState([]);
@@ -49,7 +50,7 @@ export default function Artikel() {
     logoHeader.id = 'pdf-logo-header';
     logoHeader.style.cssText = 'display: flex; align-items: center; padding: 20px 28px; border-bottom: 2px solid #e8a0b4; background: white;';
     logoHeader.innerHTML = `
-      <img src="/Image/LOGO INTAN MIRACLE colour italic.webp" style="height: 45px; margin-right: 14px;">
+      <img src="${img('/Image/LOGO INTAN MIRACLE colour italic.webp')}" style="height: 45px; margin-right: 14px;">
       <div>
         <div style="font-size: 0.78rem; color: #999; margin-top: 2px;">www.intanmiracle.com</div>
       </div>
@@ -62,7 +63,7 @@ export default function Artikel() {
     if (articleImageDiv) {
       logoOverlay = document.createElement('img');
       logoOverlay.id = 'pdf-logo-overlay';
-      logoOverlay.src = '/Image/LOGO INTAN MIRACLE colour italic.webp';
+      logoOverlay.src = img('/Image/LOGO INTAN MIRACLE colour italic.webp');
       logoOverlay.style.cssText = 'position: absolute; top: 12px; left: 12px; height: 40px; background: rgba(255,255,255,0.85); padding: 6px 10px; border-radius: 8px; z-index: 5;';
       articleImageDiv.style.position = 'relative';
       articleImageDiv.appendChild(logoOverlay);
@@ -154,7 +155,7 @@ export default function Artikel() {
       category: 'Kehamilan',
       title: 'Kenali Tanda Bahaya Kehamilan agar Ibu dan Bayi Tetap Aman',
       summary: 'Kehamilan adalah momen paling indah dalam hidup seorang ibu — namun tahukah Anda bahwa sekitar 15% kehamilan dapat berkembang menjadi komplikasi serius? Mengenali tanda bahaya sejak dini bisa menyelamatkan nyawa.',
-      image_url: '/Image/tanda-bahaya-kehamilan.webp'
+      image_url: img('/Image/tanda-bahaya-kehamilan.webp')
     }
   ];
 
@@ -175,7 +176,7 @@ export default function Artikel() {
         <div className="container" style={{ maxWidth: '900px' }}>
           <div className="featured-article animate-on-scroll">
             <div className="featured-article-image">
-              <img src="/Image/Pijat-Bayi-Bisa-Optimalkan-Tumbuh-Kembang.webp" alt="Pijat bayi - sentuhan lembut ibu" />
+              <img src={img('/Image/Pijat-Bayi-Bisa-Optimalkan-Tumbuh-Kembang.webp')} alt="Pijat bayi - sentuhan lembut ibu" />
             </div>
             <div className="featured-article-body" style={{ position: 'relative' }}>
               <button 

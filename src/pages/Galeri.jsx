@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import useScrollAnimation from '../hooks/useScrollAnimation';
+import { img } from '../utils/imageUrl';
 
 export default function Galeri() {
   const [dbGallery, setDbGallery] = useState([]);
@@ -32,7 +33,7 @@ export default function Galeri() {
 
   // Static Fallback Images (1-16)
   const fallbackGallery = Array.from({ length: 16 }, (_, i) => ({
-    image_url: `/Image/Galeri Intan Miracle Est 2019/${i + 1}.webp`,
+    image_url: img(`/Image/Galeri Intan Miracle Est 2019/${i + 1}.webp`),
     caption: `Kegiatan Intan Miracle ${i + 1}`
   }));
 

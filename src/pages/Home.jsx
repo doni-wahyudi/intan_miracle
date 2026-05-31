@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import useScrollAnimation from '../hooks/useScrollAnimation';
+import { img } from '../utils/imageUrl';
 
 export default function Home() {
   const [testimonials, setTestimonials] = useState([]);
@@ -150,7 +151,7 @@ export default function Home() {
           <div className="hero-visual">
             <div className="hero-image-wrapper">
               <div className="hero-blob"></div>
-              <img src="/Image/IMG_3317.webp" alt="Intan Miracle - Terapis Profesional" className="hero-photo" />
+              <img src={img('/Image/IMG_3317.webp')} alt="Intan Miracle - Terapis Profesional" className="hero-photo" />
             </div>
             <div className="hero-float-card card-1">
               <div className="float-icon pink">💆‍♀️</div>
@@ -213,15 +214,15 @@ export default function Home() {
           </div>
           <div className="momen-grid">
             <div className="gallery-item animate-on-scroll">
-              <img src="/Image/Galeri Intan Miracle Est 2019/1.webp" alt="Momen Intan Miracle 1" />
+              <img src={img('/Image/Galeri Intan Miracle Est 2019/1.webp')} alt="Momen Intan Miracle 1" />
               <div className="gallery-overlay"></div>
             </div>
             <div className="gallery-item animate-on-scroll">
-              <img src="/Image/Galeri Intan Miracle Est 2019/5.webp" alt="Momen Intan Miracle 5" />
+              <img src={img('/Image/Galeri Intan Miracle Est 2019/5.webp')} alt="Momen Intan Miracle 5" />
               <div className="gallery-overlay"></div>
             </div>
             <div className="gallery-item animate-on-scroll">
-              <img src="/Image/Galeri Intan Miracle Est 2019/15.webp" alt="Momen Intan Miracle 15" />
+              <img src={img('/Image/Galeri Intan Miracle Est 2019/15.webp')} alt="Momen Intan Miracle 15" />
               <div className="gallery-overlay"></div>
             </div>
           </div>
@@ -242,7 +243,7 @@ export default function Home() {
               <div style={{ background: 'var(--pink-50)', borderRadius: 'var(--radius-xl)', padding: '48px', textAlign: 'center' }}>
                 <div style={{ marginBottom: '24px', overflow: 'hidden', borderRadius: 'var(--radius-lg)' }}>
                   <img 
-                    src="/Image/Melahirkan.webp" 
+                    src={img('/Image/Melahirkan.webp')} 
                     alt="Pelayanan Intan Miracle"
                     style={{ width: '100%', height: 'auto', display: 'block', borderRadius: 'var(--radius-lg)' }}
                   />

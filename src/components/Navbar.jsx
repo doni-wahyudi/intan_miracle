@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
+import { img } from '../utils/imageUrl';
 
 export default function Navbar() {
   const [menuActive, setMenuActive] = useState(false);
@@ -42,7 +43,7 @@ export default function Navbar() {
       <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
         <div className="container">
           <Link to="/" className="navbar-brand" onClick={closeMenu}>
-            <img src="/Image/LOGO INTAN MIRACLE colour italic.webp" alt="Intan Miracle Logo" className="logo-image" />
+            <img src={img('/Image/LOGO INTAN MIRACLE colour italic.webp')} alt="Intan Miracle Logo" className="logo-image" />
           </Link>
           
           <div className={`navbar-nav ${menuActive ? 'active' : ''}`}>
