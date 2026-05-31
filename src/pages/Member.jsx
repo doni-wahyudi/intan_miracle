@@ -25,7 +25,7 @@ export default function Member() {
   const [saveLoading, setSaveLoading] = useState(false);
 
   // Run scroll animations
-  useScrollAnimation([session, activeTab]);
+  useScrollAnimation([session, activeTab, loading]);
 
   // Check session on load
   useEffect(() => {
