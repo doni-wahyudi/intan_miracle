@@ -492,7 +492,7 @@ export default function Admin() {
                 ❌ {loginError}
               </p>
             )}
-            <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '14px' }} disabled={loginLoading}>
+            <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '14px', display: 'flex', justifyContent: 'center', alignItems: 'center' }} disabled={loginLoading}>
               {loginLoading ? 'Memproses Masuk...' : 'Masuk Dashboard'}
             </button>
           </form>
