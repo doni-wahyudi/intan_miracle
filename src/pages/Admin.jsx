@@ -34,6 +34,7 @@ export default function Admin() {
   const [resType, setResType] = useState('all');
   const [resStatus, setResStatus] = useState('all');
   const [resTime, setResTime] = useState('all');
+  const [resDate, setResDate] = useState('');
 
   // Stats
   const [stats, setStats] = useState({ totalRes: 0, pendingRes: 0, monthRes: 0 });
@@ -611,7 +612,8 @@ export default function Admin() {
               const matchType = resType === 'all' ? true : (res.tipe_layanan || 'homecare') === resType;
               const matchStatus = resStatus === 'all' ? true : res.status === resStatus;
               const matchTime = resTime === 'all' ? true : res.jam === resTime;
-              return matchSearch && matchType && matchStatus && matchTime;
+              const matchDate = resDate === '' ? true : res.tanggal === resDate;
+              return matchSearch && matchType && matchStatus && matchTime && matchDate;
             });
 
             return (
@@ -653,6 +655,28 @@ export default function Admin() {
                       onChange={(e) => setResSearch(e.target.value)}
                       style={{ margin: 0, padding: '8px 12px', fontSize: '0.85rem' }}
                     />
+                  </div>
+                  <div style={{ width: '180px' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>📅 Filter Tanggal</label>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <input 
+                        type="date" 
+                        className="form-control" 
+                        value={resDate}
+                        onChange={(e) => setResDate(e.target.value)}
+                        style={{ margin: 0, padding: '6px 8px', fontSize: '0.85rem', height: '36px', flex: 1 }}
+                      />
+                      {resDate && (
+                        <button 
+                          onClick={() => setResDate('')} 
+                          className="btn btn-secondary" 
+                          style={{ padding: '6px 10px', fontSize: '0.75rem', height: '36px', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          title="Hapus filter tanggal"
+                        >
+                          ❌
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div style={{ width: '150px' }}>
                     <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>🏠 Tipe Layanan</label>
