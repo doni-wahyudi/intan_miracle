@@ -80,6 +80,11 @@ export default function Member() {
         setMemberStatus(data.status || 'pending');
         // Profile is "filled" if at least nama_ibu is set
         setHasProfile(!!data.nama_ibu);
+
+        // Sync email if missing in DB
+        if (!data.email && user.email) {
+          supabase.from('members').update({ email: user.email }).eq('id', user.id).then();
+        }
       } else {
         setHasProfile(false);
       }
@@ -162,6 +167,7 @@ export default function Member() {
 
     const profileData = {
       id: user.id,
+      email: user.email,
       nama_ibu: namaIbu,
       nama_bayi: namaBayi,
       usia_bayi: usiaBayi,

@@ -35,6 +35,12 @@ export default function Admin() {
   const [resStatus, setResStatus] = useState('all');
   const [resTime, setResTime] = useState('all');
   const [resDate, setResDate] = useState('');
+  const [resPage, setResPage] = useState(1);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setResPage(1);
+  }, [resSearch, resType, resStatus, resTime, resDate]);
 
   // Stats
   const [stats, setStats] = useState({ totalRes: 0, pendingRes: 0, monthRes: 0 });
@@ -605,16 +611,31 @@ export default function Admin() {
         <div className="admin-content" style={{ padding: '40px' }}>
           {/* 1. RESERVASI TAB */}
           {currentTab === 'reservasi' && (() => {
-            const filteredReservations = reservations.filter((res) => {
-              const matchSearch = 
-                (res.nama_ibu || '').toLowerCase().includes(resSearch.toLowerCase()) || 
-                (res.nama_bayi || '').toLowerCase().includes(resSearch.toLowerCase());
-              const matchType = resType === 'all' ? true : (res.tipe_layanan || 'homecare') === resType;
-              const matchStatus = resStatus === 'all' ? true : res.status === resStatus;
-              const matchTime = resTime === 'all' ? true : res.jam === resTime;
-              const matchDate = resDate === '' ? true : res.tanggal === resDate;
-              return matchSearch && matchType && matchStatus && matchTime && matchDate;
-            });
+            const sortedReservations = [...reservations]
+              .filter((res) => {
+                const matchSearch = 
+                  (res.nama_ibu || '').toLowerCase().includes(resSearch.toLowerCase()) || 
+                  (res.nama_bayi || '').toLowerCase().includes(resSearch.toLowerCase());
+                const matchType = resType === 'all' ? true : (res.tipe_layanan || 'homecare') === resType;
+                const matchStatus = resStatus === 'all' ? true : res.status === resStatus;
+                const matchTime = resTime === 'all' ? true : res.jam === resTime;
+                const matchDate = resDate === '' ? true : res.tanggal === resDate;
+                return matchSearch && matchType && matchStatus && matchTime && matchDate;
+              })
+              .sort((a, b) => {
+                const dateA = a.tanggal || '';
+                const dateB = b.tanggal || '';
+                if (dateA !== dateB) return dateB.localeCompare(dateA);
+                const timeA = a.jam || '';
+                const timeB = b.jam || '';
+                return timeB.localeCompare(timeA);
+              });
+
+            const ITEMS_PER_PAGE = 10;
+            const totalItems = sortedReservations.length;
+            const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE) || 1;
+            const currentPage = resPage > totalPages ? totalPages : resPage;
+            const paginatedReservations = sortedReservations.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
             return (
               <div className="tab-panel active">
@@ -726,7 +747,7 @@ export default function Admin() {
                 {/* Data Table */}
                 <div className="admin-card">
                   <div className="card-header">
-                    <h2>Daftar Janji Temu Terbaru ({filteredReservations.length})</h2>
+                    <h2>Daftar Janji Temu Terbaru ({totalItems})</h2>
                   </div>
                   <div className="table-responsive">
                     <table className="admin-table">
@@ -741,12 +762,12 @@ export default function Admin() {
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredReservations.length === 0 ? (
+                        {paginatedReservations.length === 0 ? (
                           <tr>
                             <td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '30px' }}>Tidak ada reservasi yang cocok dengan filter.</td>
                           </tr>
                         ) : (
-                          filteredReservations.map((res) => (
+                          paginatedReservations.map((res) => (
                             <tr key={res.id}>
                               <td>
                                 <strong>{formatDate(res.tanggal)}</strong><br />
@@ -782,6 +803,42 @@ export default function Admin() {
                       </tbody>
                     </table>
                   </div>
+                  {/* Pagination Controller */}
+                  {totalPages > 1 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 32px', borderTop: '1px solid #f3e8eb', flexWrap: 'wrap', gap: '12px' }}>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                        Menampilkan <strong>{Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, totalItems)}</strong> - <strong>{Math.min(currentPage * ITEMS_PER_PAGE, totalItems)}</strong> dari <strong>{totalItems}</strong> reservasi
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button 
+                          onClick={() => setResPage(prev => Math.max(prev - 1, 1))} 
+                          disabled={currentPage === 1}
+                          className="btn btn-secondary"
+                          style={{ padding: '6px 12px', fontSize: '0.85rem', margin: 0, opacity: currentPage === 1 ? 0.5 : 1, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                        >
+                          ◀️ Sebelumnya
+                        </button>
+                        {[...Array(totalPages)].map((_, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => setResPage(idx + 1)}
+                            className={`btn ${currentPage === idx + 1 ? 'btn-primary' : 'btn-secondary'}`}
+                            style={{ padding: '6px 12px', fontSize: '0.85rem', margin: 0 }}
+                          >
+                            {idx + 1}
+                          </button>
+                        ))}
+                        <button 
+                          onClick={() => setResPage(prev => Math.min(prev + 1, totalPages))} 
+                          disabled={currentPage === totalPages}
+                          className="btn btn-secondary"
+                          style={{ padding: '6px 12px', fontSize: '0.85rem', margin: 0, opacity: currentPage === totalPages ? 0.5 : 1, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+                        >
+                          Selanjutnya ▶️
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -817,7 +874,10 @@ export default function Admin() {
                         members.map((mem) => (
                           <tr key={mem.id}>
                             <td><strong>{mem.member_number ? `IM-${mem.member_number}` : '-'}</strong></td>
-                            <td><strong>{mem.nama_ibu || 'Member Baru'}</strong></td>
+                            <td>
+                              <strong>{mem.nama_ibu || 'Member Baru'}</strong><br />
+                              <small style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>✉️ {mem.email || '-'}</small>
+                            </td>
                             <td>
                               {mem.nama_bayi || '-'} <small style={{ color: 'var(--text-muted)' }}>({mem.usia_bayi || '-'})</small><br />
                               <small style={{ color: 'var(--text-muted)', fontWeight: 500 }}>🚻 {mem.jenis_kelamin_bayi || '-'}</small>
