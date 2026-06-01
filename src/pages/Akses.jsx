@@ -1,11 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { img } from '../utils/imageUrl';
 
 export default function Akses() {
   return (
     <div style={{
-      minHeight: '85vh',
+      minHeight: '90vh',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -13,30 +12,21 @@ export default function Akses() {
       background: 'linear-gradient(135deg, var(--pink-50) 0%, #fff 100%)',
     }}>
       <div style={{
-        maxWidth: '500px',
+        maxWidth: '520px',
         width: '100%',
         background: 'white',
-        borderRadius: 'var(--radius-2xl)',
-        boxShadow: 'var(--shadow-xl)',
+        borderRadius: '24px',
+        boxShadow: '0 20px 40px -15px rgba(236, 72, 153, 0.12), 0 0 50px 0 rgba(0, 0, 0, 0.01)',
         border: '1px solid rgba(236, 72, 153, 0.1)',
-        padding: '40px 30px',
+        padding: '48px 36px',
         textAlign: 'center',
         boxSizing: 'border-box'
       }}>
-        {/* Logo */}
-        <div style={{ marginBottom: '24px' }}>
-          <img 
-            src={img('/Image/LOGO INTAN MIRACLE colour italic.webp')} 
-            alt="Intan Miracle Logo" 
-            style={{ maxHeight: '70px', objectFit: 'contain' }}
-          />
-        </div>
-
         {/* Title */}
-        <h2 className="text-gradient" style={{ fontSize: '1.6rem', marginBottom: '8px', fontWeight: 800 }}>
+        <h2 className="text-gradient" style={{ fontSize: '1.8rem', marginBottom: '12px', fontWeight: 800 }}>
           Akses Cepat Layanan
         </h2>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '32px' }}>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '36px' }}>
           Selamat datang di Intan Miracle Care! 🌸 Silakan pilih menu di bawah ini untuk memulai langkah Anda:
         </p>
 
@@ -46,33 +36,80 @@ export default function Akses() {
           <Link to="/reservasi" style={{ textDecoration: 'none' }}>
             <div 
               style={{
-                background: 'linear-gradient(135deg, var(--pink-500) 0%, var(--pink-600) 100%)',
-                color: 'white',
+                background: 'white',
+                border: '2px solid rgba(236, 72, 153, 0.12)',
                 padding: '24px',
-                borderRadius: 'var(--radius-xl)',
+                borderRadius: '20px',
                 textAlign: 'left',
-                boxShadow: '0 8px 24px rgba(236, 72, 153, 0.15)',
-                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                boxShadow: '0 4px 20px rgba(236, 72, 153, 0.02)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '16px'
+                justifyContent: 'space-between',
+                gap: '20px',
+                position: 'relative',
+                overflow: 'hidden'
               }}
               onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'translateY(-3px)';
-                e.currentTarget.style.boxShadow = '0 12px 30px rgba(236, 72, 153, 0.25)';
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.borderColor = 'var(--pink-400)';
+                e.currentTarget.style.boxShadow = '0 12px 30px rgba(236, 72, 153, 0.08)';
+                const arrow = e.currentTarget.querySelector('.arrow-icon');
+                if (arrow) arrow.style.transform = 'translateX(6px)';
+                const title = e.currentTarget.querySelector('.card-title');
+                if (title) title.style.color = 'var(--pink-600)';
               }}
               onMouseOut={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 8px 24px rgba(236, 72, 153, 0.15)';
+                e.currentTarget.style.borderColor = 'rgba(236, 72, 153, 0.12)';
+                e.currentTarget.style.boxShadow = '0 4px 20px rgba(236, 72, 153, 0.02)';
+                const arrow = e.currentTarget.querySelector('.arrow-icon');
+                if (arrow) arrow.style.transform = 'translateX(0)';
+                const title = e.currentTarget.querySelector('.card-title');
+                if (title) title.style.color = '#1f2937';
               }}
             >
-              <span style={{ fontSize: '2.5rem' }}>📅</span>
-              <div>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 700, margin: '0 0 4px 0', color: 'white' }}>Reservasi Layanan</h3>
-                <p style={{ fontSize: '0.8rem', color: 'rgba(255, 255, 255, 0.9)', margin: 0, lineHeight: 1.4 }}>
-                  Pesan jadwal terapi, pijat bayi, spa, atau homecare dengan mudah.
-                </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '16px',
+                  background: 'linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '2rem',
+                  flexShrink: 0,
+                  border: '1px solid rgba(236, 72, 153, 0.1)'
+                }}>
+                  📅
+                </div>
+                <div>
+                  <h3 className="card-title" style={{ 
+                    fontSize: '1.2rem', 
+                    fontWeight: 700, 
+                    margin: '0 0 6px 0', 
+                    color: '#1f2937',
+                    transition: 'color 0.3s ease'
+                  }}>
+                    Reservasi Layanan
+                  </h3>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                    Pesan jadwal terapi, pijat bayi, spa, atau homecare dengan mudah.
+                  </p>
+                </div>
+              </div>
+              <div className="arrow-icon" style={{
+                fontSize: '1.5rem',
+                color: 'var(--pink-500)',
+                fontWeight: 'bold',
+                transition: 'transform 0.3s ease',
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center'
+              }}>
+                →
               </div>
             </div>
           </Link>
@@ -82,45 +119,85 @@ export default function Akses() {
             <div 
               style={{
                 background: 'white',
-                border: '2px solid var(--pink-200)',
-                color: 'var(--text-primary)',
+                border: '2px solid rgba(236, 72, 153, 0.12)',
                 padding: '24px',
-                borderRadius: 'var(--radius-xl)',
+                borderRadius: '20px',
                 textAlign: 'left',
-                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.02)',
-                transition: 'transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
+                boxShadow: '0 4px 20px rgba(236, 72, 153, 0.02)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '16px'
+                justifyContent: 'space-between',
+                gap: '20px',
+                position: 'relative',
+                overflow: 'hidden'
               }}
               onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'translateY(-3px)';
+                e.currentTarget.style.transform = 'translateY(-4px)';
                 e.currentTarget.style.borderColor = 'var(--pink-400)';
-                e.currentTarget.style.boxShadow = '0 8px 24px rgba(236, 72, 153, 0.08)';
+                e.currentTarget.style.boxShadow = '0 12px 30px rgba(236, 72, 153, 0.08)';
+                const arrow = e.currentTarget.querySelector('.arrow-icon');
+                if (arrow) arrow.style.transform = 'translateX(6px)';
+                const title = e.currentTarget.querySelector('.card-title');
+                if (title) title.style.color = 'var(--pink-600)';
               }}
               onMouseOut={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.borderColor = 'var(--pink-200)';
-                e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.02)';
+                e.currentTarget.style.borderColor = 'rgba(236, 72, 153, 0.12)';
+                e.currentTarget.style.boxShadow = '0 4px 20px rgba(236, 72, 153, 0.02)';
+                const arrow = e.currentTarget.querySelector('.arrow-icon');
+                if (arrow) arrow.style.transform = 'translateX(0)';
+                const title = e.currentTarget.querySelector('.card-title');
+                if (title) title.style.color = '#1f2937';
               }}
             >
-              <span style={{ fontSize: '2.5rem' }}>💎</span>
-              <div>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 700, margin: '0 0 4px 0', color: 'var(--pink-600)' }}>Member Area</h3>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
-                  Masuk / daftar member eksklusif untuk mendapatkan program diskon.
-                </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '16px',
+                  background: 'linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '2rem',
+                  flexShrink: 0,
+                  border: '1px solid rgba(236, 72, 153, 0.1)'
+                }}>
+                  💎
+                </div>
+                <div>
+                  <h3 className="card-title" style={{ 
+                    fontSize: '1.2rem', 
+                    fontWeight: 700, 
+                    margin: '0 0 6px 0', 
+                    color: '#1f2937',
+                    transition: 'color 0.3s ease'
+                  }}>
+                    Member Area
+                  </h3>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                    Masuk / daftar member eksklusif untuk mendapatkan program diskon.
+                  </p>
+                </div>
+              </div>
+              <div className="arrow-icon" style={{
+                fontSize: '1.5rem',
+                color: 'var(--pink-500)',
+                fontWeight: 'bold',
+                transition: 'transform 0.3s ease',
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center'
+              }}>
+                →
               </div>
             </div>
           </Link>
-        </div>
-
-        {/* Footer info */}
-        <div style={{ marginTop: '36px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-          © {new Date().getFullYear()} Intan Miracle Care. All Rights Reserved.
         </div>
       </div>
     </div>
   );
 }
+
