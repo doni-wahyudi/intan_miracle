@@ -452,7 +452,7 @@ export default function Member() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
                 {/* Profile Info Card */}
-                <div className="profile-card animate-on-scroll" style={{ gridColumn: 'span 1' }}>
+                <div className="profile-card" style={{ gridColumn: 'span 1' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                     <h3 style={{ margin: 0, fontSize: '1.1rem' }}>📋 Informasi Profil</h3>
                     <button 
@@ -475,7 +475,7 @@ export default function Member() {
                 {/* Quick Actions + Telegram */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                   {/* Quick Actions Card */}
-                  <div className="profile-card animate-on-scroll">
+                  <div className="profile-card">
                     <h3 style={{ marginBottom: '16px', fontSize: '1.1rem' }}>⚡ Aksi Cepat</h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       <Link to="/reservasi" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
@@ -491,8 +491,8 @@ export default function Member() {
                   </div>
 
                   {/* WhatsApp Group Card (Gated) */}
-                  {memberStatus === 'verified' && whatsappLink && (
-                    <div className="animate-on-scroll" style={{
+                  {(memberStatus === 'verified' || isAdmin) && whatsappLink && (
+                    <div style={{
                       background: 'linear-gradient(135deg, #25d36615, #25d36608)',
                       borderRadius: 'var(--radius-xl)',
                       padding: '28px',
@@ -533,8 +533,8 @@ export default function Member() {
               </div>
 
               {/* Member Status Banners */}
-              {memberStatus === 'pending' && (
-                <div className="animate-on-scroll" style={{
+              {memberStatus === 'pending' && !isAdmin && (
+                <div style={{
                   background: 'linear-gradient(135deg, var(--pink-50), #fff)',
                   border: '1px solid var(--pink-200)',
                   borderRadius: 'var(--radius-xl)',
@@ -554,8 +554,8 @@ export default function Member() {
                 </div>
               )}
 
-              {memberStatus === 'rejected' && (
-                <div className="animate-on-scroll" style={{
+              {memberStatus === 'rejected' && !isAdmin && (
+                <div style={{
                   background: 'linear-gradient(135deg, #fef2f2, #fff)',
                   border: '1px solid #fee2e2',
                   borderRadius: 'var(--radius-xl)',
@@ -576,13 +576,13 @@ export default function Member() {
               )}
 
               {/* Member Programs Section — Gated */}
-              {memberStatus === 'verified' && (
+              {(memberStatus === 'verified' || isAdmin) && (
                 <div style={{ marginTop: '32px' }}>
-                  <h3 className="animate-on-scroll" style={{ fontSize: '1.2rem', marginBottom: '20px' }}>🎁 Program Khusus Member</h3>
+                  <h3 style={{ fontSize: '1.2rem', marginBottom: '20px' }}>🎁 Program Khusus Member</h3>
                   {memberPrograms.length > 0 ? (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
                       {memberPrograms.map((prog) => (
-                        <div key={prog.id} className="animate-on-scroll" style={{
+                        <div key={prog.id} style={{
                           background: 'white',
                           borderRadius: 'var(--radius-xl)',
                           padding: '28px',
@@ -613,7 +613,7 @@ export default function Member() {
                       ))}
                     </div>
                   ) : (
-                    <div className="animate-on-scroll" style={{
+                    <div style={{
                       background: 'var(--pink-50)',
                       borderRadius: 'var(--radius-xl)',
                       padding: '40px',
