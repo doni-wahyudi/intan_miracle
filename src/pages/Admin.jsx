@@ -23,10 +23,17 @@ export default function Admin() {
   const [testimonials, setTestimonials] = useState([]);
   const [certificates, setCertificates] = useState([]);
   const [memberProgramsList, setMemberProgramsList] = useState([]);
+  const [therapistsList, setTherapistsList] = useState([]);
 
   // Site Settings
-  const [telegramLink, setTelegramLink] = useState('');
+  const [whatsappLink, setWhatsappLink] = useState('');
   const [settingsLoading, setSettingsLoading] = useState(false);
+
+  // Reservation Filter States
+  const [resSearch, setResSearch] = useState('');
+  const [resType, setResType] = useState('all');
+  const [resStatus, setResStatus] = useState('all');
+  const [resTime, setResTime] = useState('all');
 
   // Stats
   const [stats, setStats] = useState({ totalRes: 0, pendingRes: 0, monthRes: 0 });
@@ -182,6 +189,9 @@ export default function Admin() {
       case 'program':
         fetchMemberPrograms();
         break;
+      case 'terapis':
+        fetchTherapists();
+        break;
       case 'pengaturan':
         fetchSettings();
         break;
@@ -243,15 +253,20 @@ export default function Admin() {
     if (!error && data) setMemberProgramsList(data);
   };
 
+  const fetchTherapists = async () => {
+    const { data, error } = await supabase.from('therapists').select('*').order('sort_order', { ascending: true });
+    if (!error && data) setTherapistsList(data);
+  };
+
   const fetchSettings = async () => {
     setSettingsLoading(true);
     try {
       const { data, error } = await supabase
         .from('site_settings')
         .select('*')
-        .eq('key', 'telegram_link')
+        .eq('key', 'whatsapp_link')
         .single();
-      if (!error && data) setTelegramLink(data.value);
+      if (!error && data) setWhatsappLink(data.value);
     } catch (err) {
       console.error('Error fetching settings:', err);
     } finally {
@@ -264,7 +279,7 @@ export default function Admin() {
     try {
       const { error } = await supabase
         .from('site_settings')
-        .upsert({ key: 'telegram_link', value: telegramLink, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+        .upsert({ key: 'whatsapp_link', value: whatsappLink, updated_at: new Date().toISOString() }, { onConflict: 'key' });
       if (error) throw error;
       alert('✅ Pengaturan berhasil disimpan!');
     } catch (err) {
@@ -295,6 +310,7 @@ export default function Admin() {
       case 'testimoni': tableName = 'testimonials'; break;
       case 'sertifikat': tableName = 'certificates'; break;
       case 'program': tableName = 'member_programs'; break;
+      case 'terapis': tableName = 'therapists'; break;
       default: return;
     }
 
@@ -335,6 +351,17 @@ export default function Admin() {
     }
   };
 
+  // --- MEMBER STATUS UPDATER ---
+  const handleMemberStatusChange = async (id, newStatus) => {
+    const { error } = await supabase.from('members').update({ status: newStatus }).eq('id', id);
+    if (error) {
+      alert('❌ Gagal memperbarui status member: ' + error.message);
+    } else {
+      alert(`✅ Berhasil mengubah status member menjadi ${newStatus === 'verified' ? 'Verified' : 'Rejected'}!`);
+      fetchMembers();
+    }
+  };
+
   // --- RESERVATION STATUS UPDATER ---
   const handleStatusChange = async (id, newStatus) => {
     const { error } = await supabase.from('reservations').update({ status: newStatus }).eq('id', id);
@@ -367,6 +394,9 @@ export default function Admin() {
     } else if (currentTab === 'program') {
       initial.title = ''; initial.description = ''; initial.discount_percent = 0;
       initial.is_active = true; initial.sort_order = 0;
+    } else if (currentTab === 'terapis') {
+      initial.name = ''; initial.role = ''; initial.image_url = '';
+      initial.is_active = true; initial.sort_order = 0;
     }
     setFormFields(initial);
     setModalOpen(true);
@@ -397,7 +427,9 @@ export default function Admin() {
     testimoni: { title: 'Ulasan & Testimoni', subtitle: 'Kelola testimoni kehangatan pelanggan di website', hasAdd: true },
     sertifikat: { title: 'Sertifikat & Lisensi', subtitle: 'Kelola dokumentasi bukti kompetensi profesionalisme owner', hasAdd: true },
     program: { title: 'Program Member', subtitle: 'Kelola program diskon dan keuntungan eksklusif untuk member', hasAdd: true },
-    pengaturan: { title: 'Pengaturan', subtitle: 'Konfigurasi website dan tautan grup Telegram', hasAdd: false }
+    terapis: { title: 'Kelola Terapis', subtitle: 'Kelola data tim terapis profesional Intan Miracle', hasAdd: true },
+    pengaturan: { title: 'Pengaturan', subtitle: 'Konfigurasi website dan tautan grup WhatsApp', hasAdd: false },
+    qrcode: { title: 'Poster & QR Code', subtitle: 'Unduh QR Code pemasaran beresolusi tinggi untuk poster Anda', hasAdd: false }
   };
 
   // Format Helper
@@ -512,7 +544,7 @@ export default function Admin() {
             <span className="menu-icon">📅</span> Reservasi Masuk
           </button>
           <button className={`menu-item ${currentTab === 'member' ? 'active' : ''}`} onClick={() => { setCurrentTab('member'); setMobileSidebarActive(false); }}>
-            <span className="menu-icon">👥</span> Kelola Member
+            <span className="menu-icon">💎</span> Kelola Member
           </button>
           <button className={`menu-item ${currentTab === 'artikel' ? 'active' : ''}`} onClick={() => { setCurrentTab('artikel'); setMobileSidebarActive(false); }}>
             <span className="menu-icon">📰</span> Kelola Artikel
@@ -532,8 +564,14 @@ export default function Admin() {
           <button className={`menu-item ${currentTab === 'program' ? 'active' : ''}`} onClick={() => { setCurrentTab('program'); setMobileSidebarActive(false); }}>
             <span className="menu-icon">🎁</span> Program Member
           </button>
+          <button className={`menu-item ${currentTab === 'terapis' ? 'active' : ''}`} onClick={() => { setCurrentTab('terapis'); setMobileSidebarActive(false); }}>
+            <span className="menu-icon">👩‍⚕️</span> Kelola Terapis
+          </button>
           <button className={`menu-item ${currentTab === 'pengaturan' ? 'active' : ''}`} onClick={() => { setCurrentTab('pengaturan'); setMobileSidebarActive(false); }}>
             <span className="menu-icon">⚙️</span> Pengaturan
+          </button>
+          <button className={`menu-item ${currentTab === 'qrcode' ? 'active' : ''}`} onClick={() => { setCurrentTab('qrcode'); setMobileSidebarActive(false); }}>
+            <span className="menu-icon">📱</span> Poster & QR Code
           </button>
         </div>
         <div className="sidebar-footer">
@@ -564,97 +602,166 @@ export default function Admin() {
         </header>
 
         <div className="admin-content" style={{ padding: '40px' }}>
-          
           {/* 1. RESERVASI TAB */}
-          {currentTab === 'reservasi' && (
-            <div className="tab-panel active">
-              {/* Stats Row */}
-              <div className="admin-stats">
-                <div className="admin-stat-card">
-                  <div className="stat-icon">📈</div>
-                  <div className="stat-info">
-                    <h3>Total Reservasi</h3>
-                    <p>{stats.totalRes}</p>
-                  </div>
-                </div>
-                <div className="admin-stat-card">
-                  <div className="stat-icon" style={{ background: '#fef3c7', color: '#d97706' }}>⌛</div>
-                  <div className="stat-info">
-                    <h3>Pending</h3>
-                    <p style={{ color: '#d97706' }}>{stats.pendingRes}</p>
-                  </div>
-                </div>
-                <div className="admin-stat-card">
-                  <div className="stat-icon" style={{ background: '#dbeafe', color: '#1d4ed8' }}>📅</div>
-                  <div className="stat-info">
-                    <h3>Bulan Ini</h3>
-                    <p style={{ color: '#1d4ed8' }}>{stats.monthRes}</p>
-                  </div>
-                </div>
-              </div>
+          {currentTab === 'reservasi' && (() => {
+            const filteredReservations = reservations.filter((res) => {
+              const matchSearch = 
+                (res.nama_ibu || '').toLowerCase().includes(resSearch.toLowerCase()) || 
+                (res.nama_bayi || '').toLowerCase().includes(resSearch.toLowerCase());
+              const matchType = resType === 'all' ? true : (res.tipe_layanan || 'homecare') === resType;
+              const matchStatus = resStatus === 'all' ? true : res.status === resStatus;
+              const matchTime = resTime === 'all' ? true : res.jam === resTime;
+              return matchSearch && matchType && matchStatus && matchTime;
+            });
 
-              {/* Data Table */}
-              <div className="admin-card">
-                <div className="card-header">
-                  <h2>Daftar Janji Temu Terbaru</h2>
+            return (
+              <div className="tab-panel active">
+                {/* Stats Row */}
+                <div className="admin-stats">
+                  <div className="admin-stat-card">
+                    <div className="stat-icon">📈</div>
+                    <div className="stat-info">
+                      <h3>Total Reservasi</h3>
+                      <p>{stats.totalRes}</p>
+                    </div>
+                  </div>
+                  <div className="admin-stat-card">
+                    <div className="stat-icon" style={{ background: '#fef3c7', color: '#d97706' }}>⌛</div>
+                    <div className="stat-info">
+                      <h3>Pending</h3>
+                      <p style={{ color: '#d97706' }}>{stats.pendingRes}</p>
+                    </div>
+                  </div>
+                  <div className="admin-stat-card">
+                    <div className="stat-icon" style={{ background: '#dbeafe', color: '#1d4ed8' }}>📅</div>
+                    <div className="stat-info">
+                      <h3>Bulan Ini</h3>
+                      <p style={{ color: '#1d4ed8' }}>{stats.monthRes}</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="table-responsive">
-                  <table className="admin-table">
-                    <thead>
-                      <tr>
-                        <th>Jadwal</th>
-                        <th>Klien (Mom & Baby)</th>
-                        <th>WhatsApp & Alamat</th>
-                        <th>Layanan</th>
-                        <th>Status</th>
-                        <th>Ubah Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {reservations.length === 0 ? (
+
+                {/* Filter Bar */}
+                <div className="admin-card" style={{ padding: '20px 24px', marginBottom: '24px', display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center' }}>
+                  <div style={{ flex: '1 1 200px' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>🔍 Cari Nama Ibu/Bayi</label>
+                    <input 
+                      type="text" 
+                      placeholder="Cari..." 
+                      className="form-control" 
+                      value={resSearch}
+                      onChange={(e) => setResSearch(e.target.value)}
+                      style={{ margin: 0, padding: '8px 12px', fontSize: '0.85rem' }}
+                    />
+                  </div>
+                  <div style={{ width: '150px' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>🏠 Tipe Layanan</label>
+                    <select 
+                      className="form-control" 
+                      value={resType}
+                      onChange={(e) => setResType(e.target.value)}
+                      style={{ margin: 0, padding: '8px', fontSize: '0.85rem' }}
+                    >
+                      <option value="all">Semua</option>
+                      <option value="homecare">🏠 Homecare</option>
+                      <option value="clinic">🏥 Clinic Care</option>
+                    </select>
+                  </div>
+                  <div style={{ width: '150px' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>⏰ Waktu Slot</label>
+                    <select 
+                      className="form-control" 
+                      value={resTime}
+                      onChange={(e) => setResTime(e.target.value)}
+                      style={{ margin: 0, padding: '8px', fontSize: '0.85rem' }}
+                    >
+                      <option value="all">Semua</option>
+                      <option value="08:00">08:00</option>
+                      <option value="11:00">11:00</option>
+                      <option value="14:00">14:00</option>
+                      <option value="17:00">17:00</option>
+                    </select>
+                  </div>
+                  <div style={{ width: '150px' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>⌛ Status</label>
+                    <select 
+                      className="form-control" 
+                      value={resStatus}
+                      onChange={(e) => setResStatus(e.target.value)}
+                      style={{ margin: 0, padding: '8px', fontSize: '0.85rem' }}
+                    >
+                      <option value="all">Semua</option>
+                      <option value="pending">Pending</option>
+                      <option value="confirmed">Confirmed</option>
+                      <option value="completed">Completed</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Data Table */}
+                <div className="admin-card">
+                  <div className="card-header">
+                    <h2>Daftar Janji Temu Terbaru ({filteredReservations.length})</h2>
+                  </div>
+                  <div className="table-responsive">
+                    <table className="admin-table">
+                      <thead>
                         <tr>
-                          <td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '30px' }}>Belum ada reservasi masuk.</td>
+                          <th>Jadwal</th>
+                          <th>Klien (Mom & Baby)</th>
+                          <th>WhatsApp & Alamat</th>
+                          <th>Layanan</th>
+                          <th>Status</th>
+                          <th>Ubah Status</th>
                         </tr>
-                      ) : (
-                        reservations.map((res) => (
-                          <tr key={res.id}>
-                            <td>
-                              <strong>{formatDate(res.tanggal)}</strong><br />
-                              <small style={{ color: 'var(--text-muted)', fontWeight: 500 }}>⏰ {res.jam}</small>
-                            </td>
-                            <td>
-                              <strong>{res.nama_ibu}</strong><br />
-                              <small style={{ color: 'var(--text-secondary)' }}>👶 {res.nama_bayi || '-'} ({res.usia_bayi || '-'})</small>
-                            </td>
-                            <td>
-                              <a href={`https://wa.me/${res.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--pink-600)', fontWeight: 600, textDecoration: 'none' }}>
-                                💬 {res.whatsapp}
-                              </a><br />
-                              <small style={{ display: 'block', maxWidth: '240px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--text-secondary)' }} title={res.alamat}>📍 {res.alamat}</small>
-                            </td>
-                            <td><span style={{ fontWeight: 500 }}>{res.layanan}</span></td>
-                            <td><span className={`status-badge status-${res.status}`}>{res.status}</span></td>
-                            <td>
-                              <select 
-                                className="status-select" 
-                                value={res.status} 
-                                onChange={(e) => handleStatusChange(res.id, e.target.value)}
-                              >
-                                <option value="pending">Pending</option>
-                                <option value="confirmed">Confirm</option>
-                                <option value="completed">Done</option>
-                                <option value="cancelled">Cancel</option>
-                              </select>
-                            </td>
+                      </thead>
+                      <tbody>
+                        {filteredReservations.length === 0 ? (
+                          <tr>
+                            <td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '30px' }}>Tidak ada reservasi yang cocok dengan filter.</td>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+                        ) : (
+                          filteredReservations.map((res) => (
+                            <tr key={res.id}>
+                              <td>
+                                <strong>{formatDate(res.tanggal)}</strong><br />
+                                <small style={{ color: 'var(--text-muted)', fontWeight: 500 }}>⏰ {res.jam} ({res.tipe_layanan === 'clinic' ? '🏥 Klinik' : '🏠 Rumah'})</small>
+                              </td>
+                              <td>
+                                <strong>{res.nama_ibu}</strong><br />
+                                <small style={{ color: 'var(--text-secondary)' }}>👶 {res.nama_bayi || '-'} ({res.usia_bayi || '-'}) — 🚻 {res.jenis_kelamin || '-'}</small>
+                              </td>
+                              <td>
+                                <a href={`https://wa.me/${res.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--pink-600)', fontWeight: 600, textDecoration: 'none' }}>
+                                  💬 {res.whatsapp}
+                                </a><br />
+                                <small style={{ display: 'block', maxWidth: '240px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--text-secondary)' }} title={res.alamat}>📍 {res.alamat}</small>
+                              </td>
+                              <td><span style={{ fontWeight: 500 }}>{res.layanan}</span></td>
+                              <td><span className={`status-badge status-${res.status}`}>{res.status}</span></td>
+                              <td>
+                                <select 
+                                  className="status-select" 
+                                  value={res.status} 
+                                  onChange={(e) => handleStatusChange(res.id, e.target.value)}
+                                >
+                                  <option value="pending">Pending</option>
+                                  <option value="confirmed">Confirm</option>
+                                  <option value="completed">Done</option>
+                                  <option value="cancelled">Cancel</option>
+                                </select>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* 2. MEMBER TAB */}
           {currentTab === 'member' && (
@@ -672,28 +779,66 @@ export default function Admin() {
                         <th>Data Si Kecil</th>
                         <th>WhatsApp</th>
                         <th>Alamat Rumah</th>
+                        <th>Status</th>
+                        <th>Verifikasi</th>
                         <th>Aksi</th>
                       </tr>
                     </thead>
                     <tbody>
                       {members.length === 0 ? (
                         <tr>
-                          <td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '30px' }}>Belum ada member terdaftar.</td>
+                          <td colSpan="8" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '30px' }}>Belum ada member terdaftar.</td>
                         </tr>
                       ) : (
                         members.map((mem) => (
                           <tr key={mem.id}>
-                            <td><span style={{ fontFamily: 'monospace' }}>{mem.id.substring(0, 8)}...</span></td>
+                            <td><strong>{mem.member_number ? `IM-${mem.member_number}` : '-'}</strong></td>
                             <td><strong>{mem.nama_ibu || 'Member Baru'}</strong></td>
-                            <td>{mem.nama_bayi || '-'} <small style={{ color: 'var(--text-muted)' }}>({mem.usia_bayi || '-'})</small></td>
                             <td>
-                              <a href={`https://wa.me/${(mem.whatsapp || '').replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--pink-600)', fontWeight: 600, textDecoration: 'none' }}>
-                                💬 {mem.whatsapp || '-'}
-                              </a>
+                              {mem.nama_bayi || '-'} <small style={{ color: 'var(--text-muted)' }}>({mem.usia_bayi || '-'})</small><br />
+                              <small style={{ color: 'var(--text-muted)', fontWeight: 500 }}>🚻 {mem.jenis_kelamin_bayi || '-'}</small>
                             </td>
-                            <td><small style={{ display: 'block', maxWidth: '250px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={mem.alamat}>{mem.alamat || '-'}</small></td>
                             <td>
-                              <button onClick={() => handleDeleteItem('members', mem.id)} className="btn btn-secondary btn-small btn-danger">Hapus</button>
+                              {mem.whatsapp ? (
+                                <a href={`https://wa.me/${mem.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--pink-600)', fontWeight: 600, textDecoration: 'none' }}>
+                                  💬 {mem.whatsapp}
+                                </a>
+                              ) : '-'}
+                            </td>
+                            <td><small style={{ display: 'block', maxWidth: '180px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={mem.alamat}>{mem.alamat || '-'}</small></td>
+                            <td>
+                              <span className={`status-badge`} style={{
+                                background: mem.status === 'verified' ? '#dcfce7' : mem.status === 'rejected' ? '#fee2e2' : '#fef3c7',
+                                color: mem.status === 'verified' ? '#15803d' : mem.status === 'rejected' ? '#b91c1c' : '#b45309',
+                                fontWeight: 700,
+                                textTransform: 'uppercase',
+                                fontSize: '0.75rem',
+                                padding: '4px 8px',
+                                borderRadius: '4px',
+                              }}>
+                                {mem.status || 'pending'}
+                              </span>
+                            </td>
+                            <td>
+                              <div style={{ display: 'flex', gap: '6px' }}>
+                                <button 
+                                  onClick={() => handleMemberStatusChange(mem.id, 'verified')} 
+                                  className="btn btn-secondary btn-small"
+                                  style={{ background: '#22c55e', color: 'white', border: 'none', padding: '4px 10px', fontSize: '0.75rem' }}
+                                >
+                                  ✔️ Setujui
+                                </button>
+                                <button 
+                                  onClick={() => handleMemberStatusChange(mem.id, 'rejected')} 
+                                  className="btn btn-secondary btn-small"
+                                  style={{ background: '#ef4444', color: 'white', border: 'none', padding: '4px 10px', fontSize: '0.75rem' }}
+                                >
+                                  ❌ Tolak
+                                </button>
+                              </div>
+                            </td>
+                            <td>
+                              <button onClick={() => handleDeleteItem('members', mem.id)} className="btn btn-secondary btn-small btn-danger" style={{ padding: '4px 10px', fontSize: '0.75rem' }}>🗑️ Hapus</button>
                             </td>
                           </tr>
                         ))
@@ -895,20 +1040,20 @@ export default function Admin() {
             <div className="tab-panel active">
               <div className="admin-card">
                 <div className="card-header">
-                  <h2>📣 Telegram Grup Member</h2>
+                  <h2>💬 Link Grup WhatsApp Member</h2>
                 </div>
                 <div style={{ padding: '32px' }}>
                   <p style={{ color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '0.9rem', lineHeight: 1.6 }}>
-                    Masukkan link undangan grup Telegram agar ditampilkan di halaman Member. Kosongkan untuk menyembunyikan fitur ini.
+                    Masukkan link undangan grup WhatsApp agar ditampilkan di halaman Member. Kosongkan untuk menyembunyikan fitur ini.
                   </p>
                   <div className="form-group" style={{ marginBottom: '20px' }}>
-                    <label style={{ fontWeight: 600 }}>🔗 Link Grup Telegram</label>
+                    <label style={{ fontWeight: 600 }}>🔗 Link Grup WhatsApp</label>
                     <input 
                       type="url" 
                       className="form-control" 
-                      placeholder="https://t.me/+xxxxx atau https://t.me/namagrup" 
-                      value={telegramLink}
-                      onChange={(e) => setTelegramLink(e.target.value)}
+                      placeholder="https://chat.whatsapp.com/B4m4y2p4zuL062gH93Vaue" 
+                      value={whatsappLink}
+                      onChange={(e) => setWhatsappLink(e.target.value)}
                     />
                   </div>
                   <button 
@@ -923,6 +1068,113 @@ export default function Admin() {
               </div>
             </div>
           )}
+
+          {/* 10. TIM TERAPIS TAB */}
+          {currentTab === 'terapis' && (
+            <div className="tab-panel active">
+              <div className="admin-grid" style={{ padding: 0 }}>
+                {therapistsList.length === 0 ? (
+                  <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--text-muted)', padding: '40px' }}>Belum ada terapis terdaftar. Silakan tambah terapis baru!</div>
+                ) : (
+                  therapistsList.map((tp) => (
+                    <div className="data-card" key={tp.id}>
+                      <div className="card-image-wrapper" style={{ height: '220px' }}>
+                        <img src={tp.image_url || img('/Image/PP 2.webp')} alt={tp.name} style={{ objectFit: 'cover', height: '100%', width: '100%' }} />
+                        <span style={{ 
+                          background: tp.is_active ? '#16a34a' : '#9ca3af', 
+                          color: 'white', 
+                          padding: '4px 10px', 
+                          borderRadius: 'var(--radius-md)', 
+                          fontSize: '0.7rem', 
+                          position: 'absolute', 
+                          top: '12px', 
+                          right: '12px',
+                          fontWeight: 700
+                        }}>
+                          {tp.is_active ? 'Aktif' : 'Nonaktif'}
+                        </span>
+                      </div>
+                      <div className="card-content">
+                        <h3>{tp.name}</h3>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--pink-600)', fontWeight: 600, marginBottom: '8px' }}>{tp.role}</p>
+                        <div className="card-meta">Urutan Tampil: <strong>{tp.sort_order}</strong></div>
+                        <div className="card-footer-actions">
+                          <button onClick={() => openEditModal(tp)} className="btn btn-secondary btn-small btn-warning">✏️ Edit</button>
+                          <button onClick={() => handleDeleteItem('therapists', tp.id)} className="btn btn-secondary btn-small btn-danger">🗑️ Hapus</button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 11. POSTER & QR CODE TAB */}
+          {currentTab === 'qrcode' && (
+            <div className="tab-panel active">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '30px' }}>
+                
+                {/* QR Reservasi */}
+                <div className="admin-card" style={{ padding: '32px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '3rem', marginBottom: '16px' }}>📅</div>
+                  <h2>QR Code Reservasi</h2>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '24px', lineHeight: 1.6 }}>
+                    Gunakan QR Code ini pada poster promosi digital atau cetak Anda agar klien dapat langsung scan untuk mengisi form reservasi.
+                  </p>
+                  <div style={{ background: '#fdf2f8', padding: '24px', borderRadius: 'var(--radius-xl)', display: 'inline-block', border: '2px solid var(--pink-200)', marginBottom: '24px' }}>
+                    <img 
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&color=db2777&data=${encodeURIComponent(window.location.origin + window.location.pathname + '#/reservasi')}`}
+                      alt="QR Code Reservasi"
+                      style={{ width: '200px', height: '200px', display: 'block' }}
+                    />
+                  </div>
+                  <div>
+                    <button 
+                      onClick={() => {
+                        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&color=db2777&data=${encodeURIComponent(window.location.origin + window.location.pathname + '#/reservasi')}`;
+                        window.open(qrUrl, '_blank');
+                      }}
+                      className="btn btn-primary"
+                      style={{ padding: '12px 24px', fontSize: '0.9rem', width: '100%', justifyContent: 'center' }}
+                    >
+                      📥 Unduh QR Reservasi (HD)
+                    </button>
+                  </div>
+                </div>
+
+                {/* QR Member */}
+                <div className="admin-card" style={{ padding: '32px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '3rem', marginBottom: '16px' }}>👑</div>
+                  <h2>QR Code Member Area</h2>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '24px', lineHeight: 1.6 }}>
+                    Gunakan QR Code ini pada brosur atau banner di klinik Anda agar para ibu dapat mendaftarkan diri menjadi member eksklusif.
+                  </p>
+                  <div style={{ background: '#fdf2f8', padding: '24px', borderRadius: 'var(--radius-xl)', display: 'inline-block', border: '2px solid var(--pink-200)', marginBottom: '24px' }}>
+                    <img 
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&color=db2777&data=${encodeURIComponent(window.location.origin + window.location.pathname + '#/member')}`}
+                      alt="QR Code Member"
+                      style={{ width: '200px', height: '200px', display: 'block' }}
+                    />
+                  </div>
+                  <div>
+                    <button 
+                      onClick={() => {
+                        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&color=db2777&data=${encodeURIComponent(window.location.origin + window.location.pathname + '#/member')}`;
+                        window.open(qrUrl, '_blank');
+                      }}
+                      className="btn btn-primary"
+                      style={{ padding: '12px 24px', fontSize: '0.9rem', width: '100%', justifyContent: 'center' }}
+                    >
+                      📥 Unduh QR Member (HD)
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          )}
+
 
         </div>
       </main>
@@ -1166,6 +1418,63 @@ export default function Admin() {
                           style={{ width: '18px', height: '18px', accentColor: 'var(--pink-500)' }}
                         />
                         Program Aktif
+                      </label>
+                    </div>
+                    <div className="form-group">
+                      <label>Urutan Tampil</label>
+                      <input type="number" className="form-control" value={formFields.sort_order || 0} onChange={(e) => updateField('sort_order', parseInt(e.target.value, 10))} />
+                    </div>
+                  </>
+                )}
+
+                {/* --- TERAPIS FORM FIELDS --- */}
+                {currentTab === 'terapis' && (
+                  <>
+                    <div className="form-group">
+                      <label>Nama Lengkap Terapis</label>
+                      <input type="text" className="form-control" placeholder="Contoh: Bdn. Risa Amelia, A.Md.Keb." value={formFields.name || ''} onChange={(e) => updateField('name', e.target.value)} required />
+                    </div>
+                    <div className="form-group">
+                      <label>Spesialisasi / Peran</label>
+                      <input type="text" className="form-control" placeholder="Contoh: Spesialis Baby Spa & Massage" value={formFields.role || ''} onChange={(e) => updateField('role', e.target.value)} required />
+                    </div>
+                    <div className="form-group">
+                      <label>Foto Terapis</label>
+                      {formFields.image_url && (
+                        <div style={{ marginBottom: '10px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e2e8f0', width: '100px', height: '100px' }}>
+                          <img src={formFields.image_url} alt="Pratinjau" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ border: '1px dashed var(--pink-200)', padding: '16px', borderRadius: 'var(--radius-lg)', textAlign: 'center' }}>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={(e) => handleImageUpload(e, 'therapists')}
+                            disabled={uploading}
+                            style={{ fontSize: '0.85rem' }}
+                          />
+                        </div>
+                        {uploading && <span style={{ fontSize: '0.8rem', color: 'var(--pink-600)' }}>⏳ Sedang mengunggah ke bucket 'therapists'...</span>}
+                        <input 
+                          type="text" 
+                          className="form-control" 
+                          placeholder="Atau tempel URL gambar di sini" 
+                          value={formFields.image_url || ''} 
+                          onChange={(e) => updateField('image_url', e.target.value)} 
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="form-group">
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={formFields.is_active !== false}
+                          onChange={(e) => updateField('is_active', e.target.checked)}
+                          style={{ width: '18px', height: '18px', accentColor: 'var(--pink-500)' }}
+                        />
+                        Terapis Aktif
                       </label>
                     </div>
                     <div className="form-group">

@@ -27,9 +27,12 @@ export default function Member() {
   const [hasProfile, setHasProfile] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
+  const [memberNumber, setMemberNumber] = useState('');
+  const [memberStatus, setMemberStatus] = useState('pending'); // 'pending' | 'verified' | 'rejected'
+
   // Member programs & settings
   const [memberPrograms, setMemberPrograms] = useState([]);
-  const [telegramLink, setTelegramLink] = useState('');
+  const [whatsappLink, setWhatsappLink] = useState('');
 
   // Run scroll animations
   useScrollAnimation([session, activeTab, loading, editMode]);
@@ -41,7 +44,7 @@ export default function Member() {
       if (session) {
         fetchProfile(session.user);
         fetchMemberPrograms();
-        fetchTelegramLink();
+        fetchWhatsappLink();
       }
       setLoading(false);
     });
@@ -51,7 +54,7 @@ export default function Member() {
       if (session) {
         fetchProfile(session.user);
         fetchMemberPrograms();
-        fetchTelegramLink();
+        fetchWhatsappLink();
       }
     });
 
@@ -73,6 +76,8 @@ export default function Member() {
         setJenisKelaminBayi(data.jenis_kelamin_bayi || '');
         setWhatsapp(data.whatsapp || '');
         setAlamat(data.alamat || '');
+        setMemberNumber(data.member_number || '');
+        setMemberStatus(data.status || 'pending');
         // Profile is "filled" if at least nama_ibu is set
         setHasProfile(!!data.nama_ibu);
       } else {
@@ -97,16 +102,16 @@ export default function Member() {
     }
   };
 
-  const fetchTelegramLink = async () => {
+  const fetchWhatsappLink = async () => {
     try {
       const { data, error } = await supabase
         .from('site_settings')
         .select('value')
-        .eq('key', 'telegram_link')
+        .eq('key', 'whatsapp_link')
         .single();
-      if (!error && data) setTelegramLink(data.value);
+      if (!error && data) setWhatsappLink(data.value);
     } catch (err) {
-      console.error('Error fetching telegram link:', err);
+      console.error('Error fetching whatsapp link:', err);
     }
   };
 
@@ -150,6 +155,11 @@ export default function Member() {
     const user = session?.user;
     if (!user) return;
 
+    let finalMemberNumber = memberNumber;
+    if (!finalMemberNumber) {
+      finalMemberNumber = String(Math.floor(100000 + Math.random() * 900000));
+    }
+
     const profileData = {
       id: user.id,
       nama_ibu: namaIbu,
@@ -158,6 +168,8 @@ export default function Member() {
       jenis_kelamin_bayi: jenisKelaminBayi,
       whatsapp,
       alamat,
+      member_number: finalMemberNumber,
+      status: memberStatus || 'pending'
     };
 
     const { error } = await supabase
@@ -169,7 +181,9 @@ export default function Member() {
     if (error) {
       alert('❌ Gagal menyimpan profil: ' + error.message);
     } else {
-      alert('✅ Profil berhasil diperbarui!');
+      alert('✅ Profil berhasil diperbarui! Pendaftaran member Anda akan ditinjau oleh Admin.');
+      setMemberNumber(finalMemberNumber);
+      setMemberStatus('pending');
       setHasProfile(true);
       setEditMode(false);
     }
@@ -190,7 +204,9 @@ export default function Member() {
     setHasProfile(false);
     setEditMode(false);
     setMemberPrograms([]);
-    setTelegramLink('');
+    setWhatsappLink('');
+    setMemberNumber('');
+    setMemberStatus('pending');
   };
 
   const adminEmails = ['intanmiracle@gmail.com', 'admin@intanmiracle.com'];
@@ -447,6 +463,7 @@ export default function Member() {
                       ✏️ Edit
                     </button>
                   </div>
+                  {memberNumber && <InfoRow icon="🆔" label="ID Member" value={`IM-${memberNumber}`} />}
                   <InfoRow icon="👤" label="Nama Ibu" value={namaIbu} />
                   <InfoRow icon="👶" label="Nama Bayi" value={namaBayi} />
                   <InfoRow icon="🍼" label="Usia Bayi" value={usiaBayi} />
@@ -473,29 +490,29 @@ export default function Member() {
                     </div>
                   </div>
 
-                  {/* Telegram Card */}
-                  {telegramLink && (
+                  {/* WhatsApp Group Card (Gated) */}
+                  {memberStatus === 'verified' && whatsappLink && (
                     <div className="animate-on-scroll" style={{
-                      background: 'linear-gradient(135deg, #0088cc15, #0088cc08)',
+                      background: 'linear-gradient(135deg, #25d36615, #25d36608)',
                       borderRadius: 'var(--radius-xl)',
                       padding: '28px',
-                      border: '1px solid #0088cc30',
+                      border: '1px solid #25d36630',
                       textAlign: 'center',
                     }}>
-                      <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>📣</div>
-                      <h3 style={{ fontSize: '1.1rem', color: '#0088cc', marginBottom: '8px' }}>Join Grup Telegram</h3>
+                      <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>💬</div>
+                      <h3 style={{ fontSize: '1.1rem', color: '#25D366', marginBottom: '8px' }}>Join Grup WhatsApp</h3>
                       <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: 1.6 }}>
-                        Bergabung di grup Telegram eksklusif kami untuk info terbaru, tips, dan promo khusus member!
+                        Bergabung di grup WhatsApp eksklusif kami untuk info terbaru, tips, dan promo khusus member!
                       </p>
                       <a 
-                        href={telegramLink} 
+                        href={whatsappLink} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         style={{
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '8px',
-                          background: '#0088cc',
+                          background: '#25D366',
                           color: 'white',
                           padding: '12px 24px',
                           borderRadius: 'var(--radius-full)',
@@ -503,68 +520,113 @@ export default function Member() {
                           fontSize: '0.9rem',
                           textDecoration: 'none',
                           transition: 'all 0.2s ease',
-                          boxShadow: '0 4px 12px rgba(0, 136, 204, 0.3)',
+                          boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)',
                         }}
                         onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
                         onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                       >
-                        ✈️ Gabung Sekarang
+                        💬 Gabung Sekarang
                       </a>
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Member Programs Section */}
-              <div style={{ marginTop: '32px' }}>
-                <h3 className="animate-on-scroll" style={{ fontSize: '1.2rem', marginBottom: '20px' }}>🎁 Program Khusus Member</h3>
-                {memberPrograms.length > 0 ? (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
-                    {memberPrograms.map((prog) => (
-                      <div key={prog.id} className="animate-on-scroll" style={{
-                        background: 'white',
-                        borderRadius: 'var(--radius-xl)',
-                        padding: '28px',
-                        border: '1px solid var(--pink-200)',
-                        boxShadow: '0 4px 16px rgba(236, 72, 153, 0.06)',
-                        position: 'relative',
-                        overflow: 'hidden',
-                      }}>
-                        {prog.discount_percent > 0 && (
-                          <div style={{
-                            position: 'absolute',
-                            top: '16px',
-                            right: '16px',
-                            background: 'linear-gradient(135deg, var(--pink-500), var(--pink-600))',
-                            color: 'white',
-                            padding: '4px 12px',
-                            borderRadius: 'var(--radius-full)',
-                            fontSize: '0.75rem',
-                            fontWeight: 700,
-                          }}>
-                            Diskon {prog.discount_percent}%
-                          </div>
-                        )}
-                        <div style={{ fontSize: '2rem', marginBottom: '12px' }}>🎉</div>
-                        <h4 style={{ fontSize: '1rem', marginBottom: '8px', color: 'var(--text-primary)', paddingRight: prog.discount_percent > 0 ? '80px' : '0' }}>{prog.title}</h4>
-                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{prog.description}</p>
-                      </div>
-                    ))}
+              {/* Member Status Banners */}
+              {memberStatus === 'pending' && (
+                <div className="animate-on-scroll" style={{
+                  background: 'linear-gradient(135deg, var(--pink-50), #fff)',
+                  border: '1px solid var(--pink-200)',
+                  borderRadius: 'var(--radius-xl)',
+                  padding: '24px',
+                  marginBottom: '24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '16px'
+                }}>
+                  <span style={{ fontSize: '2.5rem' }}>⏳</span>
+                  <div>
+                    <h4 style={{ color: 'var(--pink-700)', marginBottom: '4px', margin: 0, fontSize: '1.05rem' }}>Akun Sedang Diverifikasi</h4>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
+                      Pendaftaran member Anda sedang ditinjau oleh Admin. Keuntungan program khusus member dan akses Grup WhatsApp akan terbuka otomatis setelah akun Anda disetujui.
+                    </p>
                   </div>
-                ) : (
-                  <div className="animate-on-scroll" style={{
-                    background: 'var(--pink-50)',
-                    borderRadius: 'var(--radius-xl)',
-                    padding: '40px',
-                    textAlign: 'center',
-                    border: '1px dashed var(--pink-200)',
-                  }}>
-                    <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🌟</div>
-                    <h4 style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Belum ada program member aktif saat ini</h4>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '8px' }}>Nantikan program eksklusif dari Intan Miracle untuk Anda!</p>
+                </div>
+              )}
+
+              {memberStatus === 'rejected' && (
+                <div className="animate-on-scroll" style={{
+                  background: 'linear-gradient(135deg, #fef2f2, #fff)',
+                  border: '1px solid #fee2e2',
+                  borderRadius: 'var(--radius-xl)',
+                  padding: '24px',
+                  marginBottom: '24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '16px'
+                }}>
+                  <span style={{ fontSize: '2.5rem' }}>❌</span>
+                  <div>
+                    <h4 style={{ color: '#dc2626', marginBottom: '4px', margin: 0, fontSize: '1.05rem' }}>Verifikasi Belum Berhasil</h4>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
+                      Mohon maaf, pengajuan member Anda belum disetujui oleh admin. Silakan periksa kembali data profil Anda dan perbarui jika terdapat kekeliruan.
+                    </p>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+
+              {/* Member Programs Section — Gated */}
+              {memberStatus === 'verified' && (
+                <div style={{ marginTop: '32px' }}>
+                  <h3 className="animate-on-scroll" style={{ fontSize: '1.2rem', marginBottom: '20px' }}>🎁 Program Khusus Member</h3>
+                  {memberPrograms.length > 0 ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+                      {memberPrograms.map((prog) => (
+                        <div key={prog.id} className="animate-on-scroll" style={{
+                          background: 'white',
+                          borderRadius: 'var(--radius-xl)',
+                          padding: '28px',
+                          border: '1px solid var(--pink-200)',
+                          boxShadow: '0 4px 16px rgba(236, 72, 153, 0.06)',
+                          position: 'relative',
+                          overflow: 'hidden',
+                        }}>
+                          {prog.discount_percent > 0 && (
+                            <div style={{
+                              position: 'absolute',
+                              top: '16px',
+                              right: '16px',
+                              background: 'linear-gradient(135deg, var(--pink-500), var(--pink-600))',
+                              color: 'white',
+                              padding: '4px 12px',
+                              borderRadius: 'var(--radius-full)',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                            }}>
+                              Diskon {prog.discount_percent}%
+                            </div>
+                          )}
+                          <div style={{ fontSize: '2rem', marginBottom: '12px' }}>🎉</div>
+                          <h4 style={{ fontSize: '1rem', marginBottom: '8px', color: 'var(--text-primary)', paddingRight: prog.discount_percent > 0 ? '80px' : '0' }}>{prog.title}</h4>
+                          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{prog.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="animate-on-scroll" style={{
+                      background: 'var(--pink-50)',
+                      borderRadius: 'var(--radius-xl)',
+                      padding: '40px',
+                      textAlign: 'center',
+                      border: '1px dashed var(--pink-200)',
+                    }}>
+                      <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🌟</div>
+                      <h4 style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Belum ada program member aktif saat ini</h4>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '8px' }}>Nantikan program eksklusif dari Intan Miracle untuk Anda!</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -7,6 +7,8 @@ import { img } from '../utils/imageUrl';
 export default function Tentang() {
   const [certs, setCerts] = useState([]);
   const [loadingCerts, setLoadingCerts] = useState(true);
+  const [therapists, setTherapists] = useState([]);
+  const [loadingTherapists, setLoadingTherapists] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState('');
@@ -29,9 +31,29 @@ export default function Tentang() {
     { image_url: img('/Sertifikat/WhatsApp Image 2026-05-31 at 08.58.03.webp'), title: 'Sertifikat Pencegahan & Penanganan Stunting' }
   ];
 
+  // Fallback Therapists
+  const fallbackTherapists = [
+    {
+      name: 'Bdn. Risa Amelia, A.Md.Keb.',
+      role: 'Spesialis Baby Massage & Kids Spa',
+      image_url: img('/Image/PP 2.webp'),
+    },
+    {
+      name: 'Siti Rahmawati, S.Tr.Keb.',
+      role: 'Spesialis Perawatan Ibu Pasca Melahirkan & Laktasi',
+      image_url: img('/Image/Foto Owner.webp'),
+    },
+    {
+      name: 'Fatimah Zahra, A.Md.Keb.',
+      role: 'Terapis Pijat Bayi & Pediatric Massage',
+      image_url: img('/Image/PP 2.webp'),
+    }
+  ];
+
+  const activeTherapists = therapists.length > 0 ? therapists : fallbackTherapists;
   const activeCerts = certs.length > 0 ? certs : fallbackCerts;
 
-  // Fetch Certificates
+  // Fetch Certificates & Therapists
   useEffect(() => {
     async function fetchCertificates() {
       try {
@@ -48,7 +70,24 @@ export default function Tentang() {
         setLoadingCerts(false);
       }
     }
+    async function fetchTherapists() {
+      try {
+        const { data, error } = await supabase
+          .from('therapists')
+          .select('*')
+          .eq('is_active', true)
+          .order('sort_order', { ascending: true });
+        if (!error && data && data.length > 0) {
+          setTherapists(data);
+        }
+      } catch (err) {
+        console.error('Error fetching therapists:', err);
+      } finally {
+        setLoadingTherapists(false);
+      }
+    }
     fetchCertificates();
+    fetchTherapists();
   }, []);
 
   // Run scroll animations
@@ -251,6 +290,42 @@ export default function Tentang() {
                   <span>Penuh Kasih Sayang</span>
                 </div>
               </div>
+            </div>
+          </div>
+          
+          {/* Terapis Grid */}
+          <div style={{ marginTop: '56px' }}>
+            <h3 className="animate-on-scroll" style={{ textAlign: 'center', fontSize: '1.5rem', marginBottom: '8px', color: 'var(--text-primary)' }}>Tim Terapis Profesional Kami</h3>
+            <p className="animate-on-scroll" style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '32px' }}>Terapis bersertifikat dan berdedikasi tinggi untuk melayani Anda dan buah hati</p>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '28px' }}>
+              {activeTherapists.map((tp, idx) => (
+                <div key={idx} className="animate-on-scroll" style={{
+                  background: 'white',
+                  borderRadius: 'var(--radius-xl)',
+                  overflow: 'hidden',
+                  boxShadow: '0 4px 20px rgba(236, 72, 153, 0.05)',
+                  border: '1px solid var(--pink-100)',
+                  transition: 'all 0.3s ease',
+                  textAlign: 'center',
+                  padding: '24px',
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-6px)';
+                  e.currentTarget.style.boxShadow = '0 10px 30px rgba(236, 72, 153, 0.08)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 20px rgba(236, 72, 153, 0.05)';
+                }}
+                >
+                  <div style={{ width: '120px', height: '120px', borderRadius: '50%', overflow: 'hidden', margin: '0 auto 16px', border: '3px solid var(--pink-200)' }}>
+                    <img src={tp.image_url || img('/Image/PP 2.webp')} alt={tp.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                  <h4 style={{ fontSize: '1.05rem', color: 'var(--text-primary)', marginBottom: '6px' }}>{tp.name}</h4>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--pink-600)', fontWeight: 600, margin: 0 }}>{tp.role}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>

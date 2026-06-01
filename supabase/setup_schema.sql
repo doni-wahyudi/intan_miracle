@@ -66,6 +66,8 @@ CREATE TABLE IF NOT EXISTS public.members (
     jenis_kelamin_bayi TEXT,
     whatsapp TEXT,
     alamat TEXT,
+    member_number TEXT UNIQUE,
+    status TEXT DEFAULT 'pending',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -107,6 +109,17 @@ CREATE TABLE IF NOT EXISTS public.site_settings (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- 10. Create therapists table (Kelola Terapis)
+CREATE TABLE IF NOT EXISTS public.therapists (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name TEXT NOT NULL,
+    role TEXT NOT NULL,
+    image_url TEXT,
+    is_active BOOLEAN DEFAULT true,
+    sort_order INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
 -- ============================================================================
 -- Enable Row Level Security (RLS) on all Database Tables
 -- ============================================================================
@@ -119,6 +132,7 @@ ALTER TABLE public.members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reservations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.member_programs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.therapists ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================================
 -- Configure RLS Policies for Database Tables
@@ -146,6 +160,8 @@ DROP POLICY IF EXISTS "Allow public read member programs" ON public.member_progr
 DROP POLICY IF EXISTS "Allow admin manage member programs" ON public.member_programs;
 DROP POLICY IF EXISTS "Allow public read site settings" ON public.site_settings;
 DROP POLICY IF EXISTS "Allow admin manage site settings" ON public.site_settings;
+DROP POLICY IF EXISTS "Allow public read therapists" ON public.therapists;
+DROP POLICY IF EXISTS "Allow admin manage therapists" ON public.therapists;
 
 -- A. Articles Policies
 CREATE POLICY "Allow public read access" ON public.articles FOR SELECT USING (true);
@@ -209,6 +225,12 @@ CREATE POLICY "Allow admin manage site settings" ON public.site_settings FOR ALL
   USING ((auth.jwt() ->> 'email') IN ('intanmiracle@gmail.com', 'admin@intanmiracle.com'))
   WITH CHECK ((auth.jwt() ->> 'email') IN ('intanmiracle@gmail.com', 'admin@intanmiracle.com'));
 
+-- J. Therapists Policies
+CREATE POLICY "Allow public read therapists" ON public.therapists FOR SELECT USING (true);
+CREATE POLICY "Allow admin manage therapists" ON public.therapists FOR ALL TO authenticated 
+  USING ((auth.jwt() ->> 'email') IN ('intanmiracle@gmail.com', 'admin@intanmiracle.com'))
+  WITH CHECK ((auth.jwt() ->> 'email') IN ('intanmiracle@gmail.com', 'admin@intanmiracle.com'));
+
 
 -- ============================================================================
 -- 8. Setup Storage Buckets for Image Uploads
@@ -227,6 +249,10 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('certificates', 'certificates', true)
 ON CONFLICT (id) DO NOTHING;
 
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('therapists', 'therapists', true)
+ON CONFLICT (id) DO NOTHING;
+
 -- ============================================================================
 -- 9. Configure Row Level Security (RLS) Policies on Storage
 -- ============================================================================
@@ -239,14 +265,14 @@ DROP POLICY IF EXISTS "Admin Delete Objects" ON storage.objects;
 
 -- Allow public select/read access to these buckets (anyone can see images)
 CREATE POLICY "Public Read Objects" ON storage.objects
-  FOR SELECT TO public USING (bucket_id IN ('articles', 'gallery', 'certificates'));
+  FOR SELECT TO public USING (bucket_id IN ('articles', 'gallery', 'certificates', 'therapists'));
 
 -- Allow authenticated administrators to perform write operations (upload/edit/delete)
 CREATE POLICY "Admin Insert Objects" ON storage.objects
-  FOR INSERT TO authenticated WITH CHECK (bucket_id IN ('articles', 'gallery', 'certificates') AND (auth.jwt() ->> 'email') IN ('intanmiracle@gmail.com', 'admin@intanmiracle.com'));
+  FOR INSERT TO authenticated WITH CHECK (bucket_id IN ('articles', 'gallery', 'certificates', 'therapists') AND (auth.jwt() ->> 'email') IN ('intanmiracle@gmail.com', 'admin@intanmiracle.com'));
 
 CREATE POLICY "Admin Update Objects" ON storage.objects
-  FOR UPDATE TO authenticated USING (bucket_id IN ('articles', 'gallery', 'certificates') AND (auth.jwt() ->> 'email') IN ('intanmiracle@gmail.com', 'admin@intanmiracle.com'));
+  FOR UPDATE TO authenticated USING (bucket_id IN ('articles', 'gallery', 'certificates', 'therapists') AND (auth.jwt() ->> 'email') IN ('intanmiracle@gmail.com', 'admin@intanmiracle.com'));
 
 CREATE POLICY "Admin Delete Objects" ON storage.objects
-  FOR DELETE TO authenticated USING (bucket_id IN ('articles', 'gallery', 'certificates') AND (auth.jwt() ->> 'email') IN ('intanmiracle@gmail.com', 'admin@intanmiracle.com'));
+  FOR DELETE TO authenticated USING (bucket_id IN ('articles', 'gallery', 'certificates', 'therapists') AND (auth.jwt() ->> 'email') IN ('intanmiracle@gmail.com', 'admin@intanmiracle.com'));

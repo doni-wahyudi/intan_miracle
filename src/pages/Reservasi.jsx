@@ -23,6 +23,7 @@ export default function Reservasi() {
   const [jam, setJam] = useState('');
   const [alamat, setAlamat] = useState('');
   const [catatan, setCatatan] = useState('');
+  const [bookedSlots, setBookedSlots] = useState([]);
 
   // UI state
   const [submitStatus, setSubmitStatus] = useState('📩 Kirim Reservasi');
@@ -54,6 +55,35 @@ export default function Reservasi() {
     }
     checkAndPrefillMember();
   }, []);
+
+  // Fetch booked slots for the selected date
+  useEffect(() => {
+    if (!tanggal) {
+      setBookedSlots([]);
+      return;
+    }
+    async function fetchBookedSlots() {
+      try {
+        const { data, error } = await supabase
+          .from('reservations')
+          .select('jam')
+          .eq('tanggal', tanggal)
+          .neq('status', 'cancelled')
+          .neq('status', 'rejected');
+
+        if (!error && data) {
+          const booked = data.map(r => r.jam);
+          setBookedSlots(booked);
+          if (jam && booked.includes(jam)) {
+            setJam('');
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching booked slots:', err);
+      }
+    }
+    fetchBookedSlots();
+  }, [tanggal, jam]);
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
@@ -325,28 +355,42 @@ Terima kasih! ✨`;
                   <div className="form-group">
                     <label>⏰ Pilih Jam</label>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '4px' }}>
-                      {TIME_SLOTS.map((slot) => (
-                        <button
-                          key={slot.time}
-                          type="button"
-                          onClick={() => setJam(slot.time)}
-                          style={{
-                            padding: '12px 8px',
-                            borderRadius: 'var(--radius-md)',
-                            border: `2px solid ${jam === slot.time ? 'var(--pink-500)' : 'var(--pink-200)'}`,
-                            background: jam === slot.time ? 'var(--pink-50)' : 'white',
-                            color: jam === slot.time ? 'var(--pink-700)' : 'var(--text-secondary)',
-                            fontWeight: jam === slot.time ? 700 : 500,
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                            fontSize: '0.85rem',
-                            textAlign: 'center',
-                          }}
-                        >
-                          <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{slot.time}</div>
-                          <small style={{ fontSize: '0.7rem', opacity: 0.7 }}>{slot.label}</small>
-                        </button>
-                      ))}
+                      {TIME_SLOTS.map((slot) => {
+                        const isBooked = bookedSlots.includes(slot.time);
+                        return (
+                          <button
+                            key={slot.time}
+                            type="button"
+                            disabled={isBooked}
+                            onClick={() => setJam(slot.time)}
+                            style={{
+                              padding: '12px 8px',
+                              borderRadius: 'var(--radius-md)',
+                              border: isBooked 
+                                ? '2px solid var(--pink-100)'
+                                : `2px solid ${jam === slot.time ? 'var(--pink-500)' : 'var(--pink-200)'}`,
+                              background: isBooked
+                                ? '#f3f4f6'
+                                : jam === slot.time ? 'var(--pink-50)' : 'white',
+                              color: isBooked
+                                ? '#9ca3af'
+                                : jam === slot.time ? 'var(--pink-700)' : 'var(--text-secondary)',
+                              fontWeight: jam === slot.time ? 700 : 500,
+                              cursor: isBooked ? 'not-allowed' : 'pointer',
+                              transition: 'all 0.2s ease',
+                              fontSize: '0.85rem',
+                              textAlign: 'center',
+                              textDecoration: isBooked ? 'line-through' : 'none',
+                              opacity: isBooked ? 0.7 : 1,
+                            }}
+                          >
+                            <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{slot.time}</div>
+                            <small style={{ fontSize: '0.7rem', opacity: 0.7 }}>
+                              {isBooked ? '🚫 Penuh' : slot.label}
+                            </small>
+                          </button>
+                        );
+                      })}
                     </div>
                     {/* Hidden required input for form validation */}
                     <input 
