@@ -32,7 +32,7 @@ export default function Member() {
 
   // Member programs & settings
   const [memberPrograms, setMemberPrograms] = useState([]);
-  const [whatsappLink, setWhatsappLink] = useState('');
+  const [whatsappLink, setWhatsappLink] = useState('https://chat.whatsapp.com/B4m4y2p4zuL062gH93Vaue');
 
   // Run scroll animations
   useScrollAnimation([session, activeTab, loading, editMode]);
@@ -109,7 +109,7 @@ export default function Member() {
         .select('value')
         .eq('key', 'whatsapp_link')
         .single();
-      if (!error && data) setWhatsappLink(data.value);
+      if (!error && data && data.value) setWhatsappLink(data.value);
     } catch (err) {
       console.error('Error fetching whatsapp link:', err);
     }
@@ -440,11 +440,6 @@ export default function Member() {
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{session.user.email}</p>
                   </div>
                   <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                    {isAdmin && (
-                      <Link to="/admin" className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem' }}>
-                        ⚙️ Dashboard Admin
-                      </Link>
-                    )}
                     <button onClick={handleLogout} className="btn btn-secondary" style={{ fontSize: '0.85rem' }}>🚪 Keluar</button>
                   </div>
                 </div>
