@@ -1199,65 +1199,33 @@ export default function Admin() {
 
           {/* 11. POSTER & QR CODE TAB */}
           {currentTab === 'qrcode' && (
-            <div className="tab-panel active">
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '30px' }}>
-                
-                {/* QR Reservasi */}
-                <div className="admin-card" style={{ padding: '32px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '3rem', marginBottom: '16px' }}>📅</div>
-                  <h2>QR Code Reservasi</h2>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '24px', lineHeight: 1.6 }}>
-                    Gunakan QR Code ini pada poster promosi digital atau cetak Anda agar klien dapat langsung scan untuk mengisi form reservasi.
-                  </p>
-                  <div style={{ background: '#fdf2f8', padding: '24px', borderRadius: 'var(--radius-xl)', display: 'inline-block', border: '2px solid var(--pink-200)', marginBottom: '24px' }}>
-                    <img 
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&color=db2777&data=${encodeURIComponent(window.location.origin + window.location.pathname + '#/reservasi')}`}
-                      alt="QR Code Reservasi"
-                      style={{ width: '200px', height: '200px', display: 'block' }}
-                    />
-                  </div>
-                  <div>
-                    <button 
-                      onClick={() => {
-                        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&color=db2777&data=${encodeURIComponent(window.location.origin + window.location.pathname + '#/reservasi')}`;
-                        window.open(qrUrl, '_blank');
-                      }}
-                      className="btn btn-primary"
-                      style={{ padding: '12px 24px', fontSize: '0.9rem', width: '100%', justifyContent: 'center' }}
-                    >
-                      📥 Unduh QR Reservasi (HD)
-                    </button>
-                  </div>
+            <div className="tab-panel active" style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+              <div className="admin-card" style={{ padding: '40px 32px', textAlign: 'center', maxWidth: '540px', width: '100%' }}>
+                <div style={{ fontSize: '3.5rem', marginBottom: '16px' }}>✨</div>
+                <h2>QR Code Akses Cepat</h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '24px', lineHeight: 1.6 }}>
+                  Cukup gunakan <strong>satu QR Code</strong> ini untuk ditempatkan pada banner, brosur, atau media promosi Anda. 
+                  Saat di-scan, pelanggan akan diarahkan ke halaman khusus untuk memilih langsung apakah ingin melakukan <strong>Reservasi Layanan</strong> atau masuk ke <strong>Member Area</strong>.
+                </p>
+                <div style={{ background: '#fdf2f8', padding: '24px', borderRadius: 'var(--radius-xl)', display: 'inline-block', border: '2px solid var(--pink-200)', marginBottom: '24px' }}>
+                  <img 
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&color=db2777&data=${encodeURIComponent(window.location.origin + window.location.pathname + '#/akses')}`}
+                    alt="QR Code Akses Cepat"
+                    style={{ width: '220px', height: '220px', display: 'block' }}
+                  />
                 </div>
-
-                {/* QR Member */}
-                <div className="admin-card" style={{ padding: '32px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '3rem', marginBottom: '16px' }}>👑</div>
-                  <h2>QR Code Member Area</h2>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '24px', lineHeight: 1.6 }}>
-                    Gunakan QR Code ini pada brosur atau banner di klinik Anda agar para ibu dapat mendaftarkan diri menjadi member eksklusif.
-                  </p>
-                  <div style={{ background: '#fdf2f8', padding: '24px', borderRadius: 'var(--radius-xl)', display: 'inline-block', border: '2px solid var(--pink-200)', marginBottom: '24px' }}>
-                    <img 
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&color=db2777&data=${encodeURIComponent(window.location.origin + window.location.pathname + '#/member')}`}
-                      alt="QR Code Member"
-                      style={{ width: '200px', height: '200px', display: 'block' }}
-                    />
-                  </div>
-                  <div>
-                    <button 
-                      onClick={() => {
-                        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&color=db2777&data=${encodeURIComponent(window.location.origin + window.location.pathname + '#/member')}`;
-                        window.open(qrUrl, '_blank');
-                      }}
-                      className="btn btn-primary"
-                      style={{ padding: '12px 24px', fontSize: '0.9rem', width: '100%', justifyContent: 'center' }}
-                    >
-                      📥 Unduh QR Member (HD)
-                    </button>
-                  </div>
+                <div>
+                  <button 
+                    onClick={() => {
+                      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&color=db2777&data=${encodeURIComponent(window.location.origin + window.location.pathname + '#/akses')}`;
+                      window.open(qrUrl, '_blank');
+                    }}
+                    className="btn btn-primary"
+                    style={{ padding: '12px 24px', fontSize: '0.9rem', width: '100%', justifyContent: 'center' }}
+                  >
+                    📥 Unduh QR Code Akses Cepat (HD)
+                  </button>
                 </div>
-
               </div>
             </div>
           )}

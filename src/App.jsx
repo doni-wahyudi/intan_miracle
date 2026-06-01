@@ -13,6 +13,7 @@ import Testimoni from './pages/Testimoni';
 import Member from './pages/Member';
 import Reservasi from './pages/Reservasi';
 import Admin from './pages/Admin';
+import Akses from './pages/Akses';
 
 function AppContent() {
   const location = useLocation();
@@ -41,6 +42,7 @@ function AppContent() {
         <Route path="/member.html" element={<Navigate to="/member" replace />} />
         <Route path="/reservasi" element={<Reservasi />} />
         <Route path="/reservasi.html" element={<Navigate to="/reservasi" replace />} />
+        <Route path="/akses" element={<Akses />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/admin.html" element={<Navigate to="/admin" replace />} />
         
