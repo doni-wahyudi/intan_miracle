@@ -1,11 +1,22 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import useScrollAnimation from '../hooks/useScrollAnimation';
 
+const CLINIC_ADDRESS = 'Jl. Kranggan Gg. Ili No.135, RT.003/RW.3, Jatirangga, Kec. Jatisampurna, Kota Bks, Jawa Barat 17434';
+
+const TIME_SLOTS = [
+  { label: 'Reservasi 1', time: '08:00' },
+  { label: 'Reservasi 2', time: '11:00' },
+  { label: 'Reservasi 3', time: '14:00' },
+  { label: 'Reservasi 4', time: '17:00' },
+];
+
 export default function Reservasi() {
+  const [tipeLayanan, setTipeLayanan] = useState('homecare');
   const [namaIbu, setNamaIbu] = useState('');
   const [namaBayi, setNamaBayi] = useState('');
   const [usiaBayi, setUsiaBayi] = useState('');
+  const [jenisKelamin, setJenisKelamin] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [layanan, setLayanan] = useState('');
   const [tanggal, setTanggal] = useState('');
@@ -14,17 +25,11 @@ export default function Reservasi() {
   const [catatan, setCatatan] = useState('');
 
   // UI state
-  const [timePickerOpen, setTimePickerOpen] = useState(false);
-  const [selectedHour, setSelectedHour] = useState('08');
-  const [selectedMin, setSelectedMin] = useState('00');
-  const [submitStatus, setSubmitStatus] = useState(' Kirim Reservasi');
+  const [submitStatus, setSubmitStatus] = useState('📩 Kirim Reservasi');
   const [loading, setLoading] = useState(false);
 
-  const hourColRef = useRef(null);
-  const minColRef = useRef(null);
-
   // Run scroll animations
-  useScrollAnimation();
+  useScrollAnimation([tipeLayanan]);
 
   // Prefill Member Info
   useEffect(() => {
@@ -41,6 +46,7 @@ export default function Reservasi() {
           setNamaIbu(profile.nama_ibu || '');
           setNamaBayi(profile.nama_bayi || '');
           setUsiaBayi(profile.usia_bayi || '');
+          setJenisKelamin(profile.jenis_kelamin_bayi || '');
           setWhatsapp(profile.whatsapp || '');
           setAlamat(profile.alamat || '');
         }
@@ -48,45 +54,6 @@ export default function Reservasi() {
     }
     checkAndPrefillMember();
   }, []);
-
-  // Time picker options
-  const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
-  const mins = ['00', '15', '30', '45'];
-
-  const handleHourScroll = () => {
-    if (!hourColRef.current) return;
-    const index = Math.round(hourColRef.current.scrollTop / 44);
-    if (hours[index]) {
-      setSelectedHour(hours[index]);
-    }
-  };
-
-  const handleMinScroll = () => {
-    if (!minColRef.current) return;
-    const index = Math.round(minColRef.current.scrollTop / 44);
-    if (mins[index]) {
-      setSelectedMin(mins[index]);
-    }
-  };
-
-  const selectHourOption = (h, index) => {
-    setSelectedHour(h);
-    if (hourColRef.current) {
-      hourColRef.current.scrollTo({ top: index * 44, behavior: 'smooth' });
-    }
-  };
-
-  const selectMinOption = (m, index) => {
-    setSelectedMin(m);
-    if (minColRef.current) {
-      minColRef.current.scrollTo({ top: index * 44, behavior: 'smooth' });
-    }
-  };
-
-  const confirmTime = () => {
-    setJam(`${selectedHour}:${selectedMin}`);
-    setTimePickerOpen(false);
-  };
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
@@ -102,16 +69,21 @@ export default function Reservasi() {
       console.error(err);
     }
 
+    const finalAlamat = tipeLayanan === 'clinic' ? CLINIC_ADDRESS : alamat;
+    const tipeLabel = tipeLayanan === 'homecare' ? 'Homecare Service' : 'Clinic Care Service';
+
     const reservationData = {
       user_id: userId,
       nama_ibu: namaIbu,
       nama_bayi: namaBayi,
       usia_bayi: usiaBayi,
+      jenis_kelamin: jenisKelamin,
+      tipe_layanan: tipeLayanan,
       whatsapp,
       layanan,
       tanggal,
       jam,
-      alamat,
+      alamat: finalAlamat,
       catatan
     };
 
@@ -123,17 +95,19 @@ export default function Reservasi() {
       console.error('Error saving reservation:', error);
     }
 
-    // WA Message structure exactly matching original
+    // WA Message
     const message =
 `Halo Intan Miracle! 🌸
 
+🏥 Tipe Layanan  : ${tipeLabel}
 👤 Nama Ibu     : ${namaIbu}
 👶 Nama Bayi    : ${namaBayi || '-'}
 🍼 Usia Bayi    : ${usiaBayi || '-'}
+🚻 Jenis Kelamin: ${jenisKelamin || '-'}
 ✨ Layanan      : ${layanan}
 📅 Tanggal      : ${tanggal}
 ⏰ Jam          : ${jam}
-📍 Alamat       : ${alamat}
+📍 Alamat       : ${finalAlamat}
 📝 Catatan      : ${catatan || '-'}
 
 Terima kasih! ✨`;
@@ -149,6 +123,7 @@ Terima kasih! ✨`;
       setNamaIbu('');
       setNamaBayi('');
       setUsiaBayi('');
+      setJenisKelamin('');
       setWhatsapp('');
       setLayanan('');
       setTanggal('');
@@ -165,6 +140,9 @@ Terima kasih! ✨`;
       }, 5000);
     }, 1000);
   };
+
+  // Get today's date for min date attribute
+  const today = new Date().toISOString().split('T')[0];
 
   return (
     <div>
@@ -186,6 +164,57 @@ Terima kasih! ✨`;
               <p>Isi data di bawah ini untuk memulai reservasi layanan</p>
               
               <form onSubmit={handleFormSubmit}>
+                {/* Service Type Toggle */}
+                <div className="form-group">
+                  <label>🏥 Tipe Layanan</label>
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '4px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setTipeLayanan('homecare')}
+                      style={{
+                        flex: 1,
+                        padding: '14px 16px',
+                        borderRadius: 'var(--radius-lg)',
+                        border: `2px solid ${tipeLayanan === 'homecare' ? 'var(--pink-500)' : 'var(--pink-200)'}`,
+                        background: tipeLayanan === 'homecare' ? 'var(--pink-50)' : 'white',
+                        color: tipeLayanan === 'homecare' ? 'var(--pink-700)' : 'var(--text-secondary)',
+                        fontWeight: tipeLayanan === 'homecare' ? 700 : 500,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        fontSize: '0.9rem',
+                        textAlign: 'center',
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      🏠 Homecare Service
+                      <br />
+                      <small style={{ fontWeight: 400, fontSize: '0.75rem', opacity: 0.8 }}>Terapis datang ke rumah Anda</small>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTipeLayanan('clinic')}
+                      style={{
+                        flex: 1,
+                        padding: '14px 16px',
+                        borderRadius: 'var(--radius-lg)',
+                        border: `2px solid ${tipeLayanan === 'clinic' ? 'var(--pink-500)' : 'var(--pink-200)'}`,
+                        background: tipeLayanan === 'clinic' ? 'var(--pink-50)' : 'white',
+                        color: tipeLayanan === 'clinic' ? 'var(--pink-700)' : 'var(--text-secondary)',
+                        fontWeight: tipeLayanan === 'clinic' ? 700 : 500,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        fontSize: '0.9rem',
+                        textAlign: 'center',
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      🏥 Clinic Care Service
+                      <br />
+                      <small style={{ fontWeight: 400, fontSize: '0.75rem', opacity: 0.8 }}>Anda datang ke klinik kami</small>
+                    </button>
+                  </div>
+                </div>
+
                 <div className="form-row">
                   <div className="form-group">
                     <label htmlFor="namaIbu">👤 Nama Ibu</label>
@@ -222,6 +251,21 @@ Terima kasih! ✨`;
                     />
                   </div>
                   <div className="form-group">
+                    <label htmlFor="jenisKelamin">🚻 Jenis Kelamin Bayi</label>
+                    <select 
+                      id="jenisKelamin" 
+                      value={jenisKelamin}
+                      onChange={(e) => setJenisKelamin(e.target.value)}
+                    >
+                      <option value="">— Pilih —</option>
+                      <option value="Laki-laki">Laki-laki</option>
+                      <option value="Perempuan">Perempuan</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
                     <label htmlFor="whatsapp">📞 Nomor WhatsApp</label>
                     <input 
                       type="tel" 
@@ -232,39 +276,38 @@ Terima kasih! ✨`;
                       required 
                     />
                   </div>
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="layanan">✨ Pilih Layanan</label>
-                  <select 
-                    id="layanan" 
-                    value={layanan}
-                    onChange={(e) => setLayanan(e.target.value)}
-                    required
-                  >
-                    <option value="" disabled>— Pilih layanan —</option>
-                    <optgroup label="👶 Pelayanan Bayi">
-                      <option value="Baby Massage">Baby Massage</option>
-                      <option value="Baby Gym">Baby Gym</option>
-                      <option value="Baby Swim">Baby Swim</option>
-                      <option value="Baby Spa">Baby Spa (Massage + Gym + Swim)</option>
-                      <option value="Baby Therapy Massage">Baby Therapy Massage</option>
-                      <option value="Cukur Bayi">Cukur Bayi</option>
-                      <option value="Tindik Bayi">Tindik Bayi</option>
-                      <option value="Perawatan Bayi Baru Lahir (Homecare)">Perawatan Bayi Baru Lahir (Homecare)</option>
-                    </optgroup>
-                    <optgroup label="🤍 Pelayanan Ibu">
-                      <option value="Pijat Ibu Hamil">Pijat Ibu Hamil</option>
-                      <option value="Pijat Ibu Nifas">Pijat Ibu Nifas</option>
-                      <option value="Bengkung">Bengkung</option>
-                    </optgroup>
-                    <optgroup label="🤱 Konselor Laktasi">
-                      <option value="Konsultasi Menyusui">Konsultasi Menyusui</option>
-                      <option value="Pijat Laktasi">Pijat Laktasi</option>
-                      <option value="Paket Lengkap Laktasi">Paket Lengkap</option>
-                      <option value="Paket Lengkap Laktasi (Homecare)">Paket Lengkap (Homecare)</option>
-                    </optgroup>
-                  </select>
+                  <div className="form-group">
+                    <label htmlFor="layanan">✨ Pilih Layanan</label>
+                    <select 
+                      id="layanan" 
+                      value={layanan}
+                      onChange={(e) => setLayanan(e.target.value)}
+                      required
+                    >
+                      <option value="" disabled>— Pilih layanan —</option>
+                      <optgroup label="👶 Pelayanan Bayi">
+                        <option value="Baby Massage">Baby Massage</option>
+                        <option value="Baby Gym">Baby Gym</option>
+                        <option value="Baby Swim">Baby Swim</option>
+                        <option value="Baby Spa">Baby Spa (Massage + Gym + Swim)</option>
+                        <option value="Baby Therapy Massage">Baby Therapy Massage</option>
+                        <option value="Cukur Bayi">Cukur Bayi</option>
+                        <option value="Tindik Bayi">Tindik Bayi</option>
+                        <option value="Perawatan Bayi Baru Lahir (Homecare)">Perawatan Bayi Baru Lahir (Homecare)</option>
+                      </optgroup>
+                      <optgroup label="🤍 Pelayanan Ibu">
+                        <option value="Pijat Ibu Hamil">Pijat Ibu Hamil</option>
+                        <option value="Pijat Ibu Nifas">Pijat Ibu Nifas</option>
+                        <option value="Bengkung">Bengkung</option>
+                      </optgroup>
+                      <optgroup label="🤱 Konselor Laktasi">
+                        <option value="Konsultasi Menyusui">Konsultasi Menyusui</option>
+                        <option value="Pijat Laktasi">Pijat Laktasi</option>
+                        <option value="Paket Lengkap Laktasi">Paket Lengkap</option>
+                        <option value="Paket Lengkap Laktasi (Homecare)">Paket Lengkap (Homecare)</option>
+                      </optgroup>
+                    </select>
+                  </div>
                 </div>
 
                 <div className="form-row">
@@ -274,95 +317,82 @@ Terima kasih! ✨`;
                       type="date" 
                       id="tanggal" 
                       value={tanggal}
+                      min={today}
                       onChange={(e) => setTanggal(e.target.value)}
                       required 
                     />
                   </div>
-                  <div className="form-group" style={{ position: 'relative' }}>
-                    <label htmlFor="jam">⏰ Jam</label>
+                  <div className="form-group">
+                    <label>⏰ Pilih Jam</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '4px' }}>
+                      {TIME_SLOTS.map((slot) => (
+                        <button
+                          key={slot.time}
+                          type="button"
+                          onClick={() => setJam(slot.time)}
+                          style={{
+                            padding: '12px 8px',
+                            borderRadius: 'var(--radius-md)',
+                            border: `2px solid ${jam === slot.time ? 'var(--pink-500)' : 'var(--pink-200)'}`,
+                            background: jam === slot.time ? 'var(--pink-50)' : 'white',
+                            color: jam === slot.time ? 'var(--pink-700)' : 'var(--text-secondary)',
+                            fontWeight: jam === slot.time ? 700 : 500,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            fontSize: '0.85rem',
+                            textAlign: 'center',
+                          }}
+                        >
+                          <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{slot.time}</div>
+                          <small style={{ fontSize: '0.7rem', opacity: 0.7 }}>{slot.label}</small>
+                        </button>
+                      ))}
+                    </div>
+                    {/* Hidden required input for form validation */}
                     <input 
-                      type="text" 
-                      id="jam" 
-                      placeholder="Pilih jam" 
-                      readOnly 
-                      value={jam}
-                      onClick={() => setTimePickerOpen(true)}
-                      style={{ cursor: 'pointer' }}
-                      required
+                      type="hidden" 
+                      value={jam} 
+                      required 
                     />
-
-                    {/* Custom Scrollable Time Picker Modal */}
-                    {timePickerOpen && (
-                      <div className="time-picker-modal active" onClick={() => setTimePickerOpen(false)}>
-                        <div className="time-picker-content" onClick={(e) => e.stopPropagation()}>
-                          <div className="time-picker-header">
-                            <h4>Pilih Jam Layanan</h4>
-                            <button type="button" className="close-picker" onClick={() => setTimePickerOpen(false)}>&times;</button>
-                          </div>
-                          <div className="time-scroller-wrapper">
-                            <div className="time-selection-indicator"></div>
-                            
-                            <div 
-                              className="time-column" 
-                              id="hourColumn" 
-                              ref={hourColRef}
-                              onScroll={handleHourScroll}
-                            >
-                              {hours.map((h, i) => (
-                                <div 
-                                  className={`time-option ${selectedHour === h ? 'active' : ''}`}
-                                  key={i}
-                                  onClick={() => selectHourOption(h, i)}
-                                >
-                                  {h}
-                                </div>
-                              ))}
-                            </div>
-                            
-                            <div className="time-column-divider">:</div>
-                            
-                            <div 
-                              className="time-column" 
-                              id="minColumn" 
-                              ref={minColRef}
-                              onScroll={handleMinScroll}
-                            >
-                              {mins.map((m, i) => (
-                                <div 
-                                  className={`time-option ${selectedMin === m ? 'active' : ''}`}
-                                  key={i}
-                                  onClick={() => selectMinOption(m, i)}
-                                >
-                                  {m}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                          <button 
-                            type="button" 
-                            className="btn btn-primary confirm-time"
-                            onClick={confirmTime}
-                            style={{ width: '100%', marginTop: '20px', padding: '10px' }}
-                          >
-                            Pilih Waktu
-                          </button>
-                        </div>
-                      </div>
+                    {!jam && (
+                      <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                        Silakan pilih salah satu slot waktu di atas
+                      </small>
                     )}
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="alamat">📍 Alamat Lengkap</label>
-                  <textarea 
-                    id="alamat" 
-                    rows="3" 
-                    placeholder="Masukkan alamat lengkap untuk layanan ke rumah"
-                    value={alamat}
-                    onChange={(e) => setAlamat(e.target.value)}
-                    required
-                  ></textarea>
-                </div>
+                {/* Address - only for Homecare */}
+                {tipeLayanan === 'homecare' && (
+                  <div className="form-group">
+                    <label htmlFor="alamat">📍 Alamat Lengkap</label>
+                    <textarea 
+                      id="alamat" 
+                      rows="3" 
+                      placeholder="Masukkan alamat lengkap untuk layanan ke rumah"
+                      value={alamat}
+                      onChange={(e) => setAlamat(e.target.value)}
+                      required
+                    ></textarea>
+                  </div>
+                )}
+
+                {/* Clinic address info */}
+                {tipeLayanan === 'clinic' && (
+                  <div style={{
+                    background: 'var(--pink-50)',
+                    borderRadius: 'var(--radius-lg)',
+                    padding: '16px 20px',
+                    border: '1px solid var(--pink-200)',
+                    marginBottom: '16px',
+                    fontSize: '0.88rem',
+                    color: 'var(--text-secondary)',
+                    lineHeight: 1.6,
+                  }}>
+                    <strong style={{ color: 'var(--pink-700)' }}>📍 Lokasi Klinik:</strong><br />
+                    {CLINIC_ADDRESS}
+                  </div>
+                )}
 
                 <div className="form-group">
                   <label htmlFor="catatan">📝 Catatan Khusus</label>
@@ -378,7 +408,7 @@ Terima kasih! ✨`;
                 <button 
                   type="submit" 
                   className="btn btn-primary btn-lg" 
-                  disabled={loading}
+                  disabled={loading || !jam}
                   style={{ width: '100%', justifyContent: 'center', marginTop: '8px' }}
                 >
                   {submitStatus}
@@ -386,7 +416,7 @@ Terima kasih! ✨`;
               </form>
             </div>
 
-            {/* Side Instructions card */}
+            {/* Side Instructions card — Dynamic based on service type */}
             <div>
               <div className="procedure-card animate-on-scroll" style={{ marginBottom: '28px' }}>
                 <h3>📋 Prosedur Reservasi</h3>
@@ -408,8 +438,17 @@ Terima kasih! ✨`;
                   <div className="procedure-step">
                     <div className="step-number">3</div>
                     <div>
-                      <h4>Terapis Datang</h4>
-                      <p>Terapis akan datang ke alamat Anda sesuai jadwal yang disepakati</p>
+                      {tipeLayanan === 'homecare' ? (
+                        <>
+                          <h4>Terapis Datang</h4>
+                          <p>Terapis akan datang ke alamat Anda sesuai jadwal yang disepakati</p>
+                        </>
+                      ) : (
+                        <>
+                          <h4>Datang ke Klinik</h4>
+                          <p>Silakan datang ke klinik kami di:<br /><strong style={{ color: 'var(--pink-600)', fontSize: '0.85rem' }}>{CLINIC_ADDRESS}</strong></p>
+                        </>
+                      )}
                     </div>
                   </div>
                   <div className="procedure-step">
@@ -430,7 +469,13 @@ Terima kasih! ✨`;
                   <li style={{ paddingLeft: '20px', position: 'relative' }}><span style={{ position: 'absolute', left: 0 }}>•</span>Layanan tersedia setiap hari</li>
                   <li style={{ paddingLeft: '20px', position: 'relative' }}><span style={{ position: 'absolute', left: 0 }}>•</span>Reservasi minimal H-1</li>
                   <li style={{ paddingLeft: '20px', position: 'relative' }}><span style={{ position: 'absolute', left: 0 }}>•</span>Pembatalan gratis H-1</li>
-                  <li style={{ paddingLeft: '20px', position: 'relative' }}><span style={{ position: 'absolute', left: 0 }}>•</span>Tersedia layanan ke rumah</li>
+                  <li style={{ paddingLeft: '20px', position: 'relative' }}><span style={{ position: 'absolute', left: 0 }}>•</span>Slot waktu: 08:00, 11:00, 14:00, 17:00</li>
+                  {tipeLayanan === 'homecare' && (
+                    <li style={{ paddingLeft: '20px', position: 'relative' }}><span style={{ position: 'absolute', left: 0 }}>•</span>Tersedia layanan ke rumah</li>
+                  )}
+                  {tipeLayanan === 'clinic' && (
+                    <li style={{ paddingLeft: '20px', position: 'relative' }}><span style={{ position: 'absolute', left: 0 }}>•</span>Pasien datang langsung ke lokasi klinik</li>
+                  )}
                 </ul>
               </div>
             </div>

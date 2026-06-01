@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS public.members (
     nama_ibu TEXT NOT NULL,
     nama_bayi TEXT,
     usia_bayi TEXT,
+    jenis_kelamin_bayi TEXT,
     whatsapp TEXT,
     alamat TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
@@ -75,14 +76,35 @@ CREATE TABLE IF NOT EXISTS public.reservations (
     nama_ibu TEXT NOT NULL,
     nama_bayi TEXT,
     usia_bayi TEXT,
+    jenis_kelamin TEXT,
+    tipe_layanan TEXT DEFAULT 'homecare',
     whatsapp TEXT NOT NULL,
     layanan TEXT NOT NULL,
     tanggal DATE NOT NULL,
     jam TEXT NOT NULL,
-    alamat TEXT NOT NULL,
+    alamat TEXT,
     catatan TEXT,
     status TEXT DEFAULT 'pending',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 8. Create member_programs table (Program Member)
+CREATE TABLE IF NOT EXISTS public.member_programs (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    discount_percent INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT true,
+    sort_order INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 9. Create site_settings table (Pengaturan Website)
+CREATE TABLE IF NOT EXISTS public.site_settings (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    key TEXT UNIQUE NOT NULL,
+    value TEXT NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 -- ============================================================================
@@ -95,6 +117,8 @@ ALTER TABLE public.testimonials ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.certificates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reservations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.member_programs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================================
 -- Configure RLS Policies for Database Tables
@@ -118,6 +142,10 @@ DROP POLICY IF EXISTS "Allow admin to manage all profiles" ON public.members;
 DROP POLICY IF EXISTS "Allow public insert reservations" ON public.reservations;
 DROP POLICY IF EXISTS "Allow users to select own reservations" ON public.reservations;
 DROP POLICY IF EXISTS "Allow admin to manage all reservations" ON public.reservations;
+DROP POLICY IF EXISTS "Allow public read member programs" ON public.member_programs;
+DROP POLICY IF EXISTS "Allow admin manage member programs" ON public.member_programs;
+DROP POLICY IF EXISTS "Allow public read site settings" ON public.site_settings;
+DROP POLICY IF EXISTS "Allow admin manage site settings" ON public.site_settings;
 
 -- A. Articles Policies
 CREATE POLICY "Allow public read access" ON public.articles FOR SELECT USING (true);
@@ -166,6 +194,18 @@ CREATE POLICY "Allow public insert reservations" ON public.reservations FOR INSE
 CREATE POLICY "Allow users to select own reservations" ON public.reservations FOR SELECT 
   USING (auth.uid() = user_id OR (auth.jwt() ->> 'email') IN ('intanmiracle@gmail.com', 'admin@intanmiracle.com'));
 CREATE POLICY "Allow admin to manage all reservations" ON public.reservations FOR ALL TO authenticated 
+  USING ((auth.jwt() ->> 'email') IN ('intanmiracle@gmail.com', 'admin@intanmiracle.com'))
+  WITH CHECK ((auth.jwt() ->> 'email') IN ('intanmiracle@gmail.com', 'admin@intanmiracle.com'));
+
+-- H. Member Programs Policies
+CREATE POLICY "Allow public read member programs" ON public.member_programs FOR SELECT USING (true);
+CREATE POLICY "Allow admin manage member programs" ON public.member_programs FOR ALL TO authenticated 
+  USING ((auth.jwt() ->> 'email') IN ('intanmiracle@gmail.com', 'admin@intanmiracle.com'))
+  WITH CHECK ((auth.jwt() ->> 'email') IN ('intanmiracle@gmail.com', 'admin@intanmiracle.com'));
+
+-- I. Site Settings Policies
+CREATE POLICY "Allow public read site settings" ON public.site_settings FOR SELECT USING (true);
+CREATE POLICY "Allow admin manage site settings" ON public.site_settings FOR ALL TO authenticated 
   USING ((auth.jwt() ->> 'email') IN ('intanmiracle@gmail.com', 'admin@intanmiracle.com'))
   WITH CHECK ((auth.jwt() ->> 'email') IN ('intanmiracle@gmail.com', 'admin@intanmiracle.com'));
 

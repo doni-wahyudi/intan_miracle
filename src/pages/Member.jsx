@@ -14,18 +14,25 @@ export default function Member() {
   const [password, setPassword] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
-  const [authMsg, setAuthMsg] = useState({ text: '', type: '' }); // type: 'success' | 'error'
+  const [authMsg, setAuthMsg] = useState({ text: '', type: '' });
 
   // Profile states
   const [namaIbu, setNamaIbu] = useState('');
   const [namaBayi, setNamaBayi] = useState('');
   const [usiaBayi, setUsiaBayi] = useState('');
+  const [jenisKelaminBayi, setJenisKelaminBayi] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [alamat, setAlamat] = useState('');
   const [saveLoading, setSaveLoading] = useState(false);
+  const [hasProfile, setHasProfile] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+
+  // Member programs & settings
+  const [memberPrograms, setMemberPrograms] = useState([]);
+  const [telegramLink, setTelegramLink] = useState('');
 
   // Run scroll animations
-  useScrollAnimation([session, activeTab, loading]);
+  useScrollAnimation([session, activeTab, loading, editMode]);
 
   // Check session on load
   useEffect(() => {
@@ -33,6 +40,8 @@ export default function Member() {
       setSession(session);
       if (session) {
         fetchProfile(session.user);
+        fetchMemberPrograms();
+        fetchTelegramLink();
       }
       setLoading(false);
     });
@@ -41,6 +50,8 @@ export default function Member() {
       setSession(session);
       if (session) {
         fetchProfile(session.user);
+        fetchMemberPrograms();
+        fetchTelegramLink();
       }
     });
 
@@ -59,11 +70,43 @@ export default function Member() {
         setNamaIbu(data.nama_ibu || '');
         setNamaBayi(data.nama_bayi || '');
         setUsiaBayi(data.usia_bayi || '');
+        setJenisKelaminBayi(data.jenis_kelamin_bayi || '');
         setWhatsapp(data.whatsapp || '');
         setAlamat(data.alamat || '');
+        // Profile is "filled" if at least nama_ibu is set
+        setHasProfile(!!data.nama_ibu);
+      } else {
+        setHasProfile(false);
       }
     } catch (err) {
       console.error('Error fetching member profile:', err);
+      setHasProfile(false);
+    }
+  };
+
+  const fetchMemberPrograms = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('member_programs')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
+      if (!error && data) setMemberPrograms(data);
+    } catch (err) {
+      console.error('Error fetching member programs:', err);
+    }
+  };
+
+  const fetchTelegramLink = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('value')
+        .eq('key', 'telegram_link')
+        .single();
+      if (!error && data) setTelegramLink(data.value);
+    } catch (err) {
+      console.error('Error fetching telegram link:', err);
     }
   };
 
@@ -112,6 +155,7 @@ export default function Member() {
       nama_ibu: namaIbu,
       nama_bayi: namaBayi,
       usia_bayi: usiaBayi,
+      jenis_kelamin_bayi: jenisKelaminBayi,
       whatsapp,
       alamat,
     };
@@ -126,6 +170,8 @@ export default function Member() {
       alert('❌ Gagal menyimpan profil: ' + error.message);
     } else {
       alert('✅ Profil berhasil diperbarui!');
+      setHasProfile(true);
+      setEditMode(false);
     }
   };
 
@@ -137,9 +183,14 @@ export default function Member() {
     setNamaIbu('');
     setNamaBayi('');
     setUsiaBayi('');
+    setJenisKelaminBayi('');
     setWhatsapp('');
     setAlamat('');
     setAuthMsg({ text: '', type: '' });
+    setHasProfile(false);
+    setEditMode(false);
+    setMemberPrograms([]);
+    setTelegramLink('');
   };
 
   const adminEmails = ['intanmiracle@gmail.com', 'admin@intanmiracle.com'];
@@ -153,13 +204,24 @@ export default function Member() {
     );
   }
 
+  // Profile info row helper
+  const InfoRow = ({ icon, label, value }) => (
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '12px 0', borderBottom: '1px solid var(--pink-100)' }}>
+      <span style={{ fontSize: '1.2rem', minWidth: '28px', textAlign: 'center' }}>{icon}</span>
+      <div>
+        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>{label}</div>
+        <div style={{ fontSize: '0.95rem', color: value ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: 500 }}>{value || 'Belum diisi'}</div>
+      </div>
+    </div>
+  );
+
   return (
     <div>
       {/* Page Header */}
       <section className="page-header">
         <div className="container">
           <h1 className="text-gradient">Member Area</h1>
-          <p>Kelola profil dan nikmati kemudahan reservasi</p>
+          <p>Kelola profil dan nikmati keuntungan member eksklusif</p>
         </div>
       </section>
 
@@ -254,26 +316,24 @@ export default function Member() {
                 </p>
               )}
             </div>
-          ) : (
-            /* Logged In Profile View */
+          ) : !hasProfile || editMode ? (
+            /* Profile Edit Form — shown for new members or when editing */
             <div className="profile-card" style={{ maxWidth: '800px', margin: '0 auto' }}>
               <div className="profile-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap', gap: '16px' }}>
                 <div>
-                  <h2>Halo, <span id="displayNamaIbu">{namaIbu || 'Member'}</span>! 👋</h2>
+                  <h2>{!hasProfile ? '👋 Selamat Datang, Member Baru!' : '✏️ Edit Profil'}</h2>
                   <p style={{ color: 'var(--text-secondary)' }}>{session.user.email}</p>
                 </div>
                 <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                  {isAdmin && (
-                    <Link to="/admin" className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                      ⚙️ Buka Dashboard Admin
-                    </Link>
+                  {hasProfile && (
+                    <button onClick={() => setEditMode(false)} className="btn btn-secondary">← Kembali</button>
                   )}
                   <button onClick={handleLogout} className="btn btn-secondary">Keluar</button>
                 </div>
               </div>
 
               <form onSubmit={handleProfileUpdate} className="form-card">
-                <h3>📝 Lengkapi Profil Anda</h3>
+                <h3>📝 {!hasProfile ? 'Lengkapi Profil Anda' : 'Perbarui Profil'}</h3>
                 <p style={{ marginBottom: '20px' }}>Data ini akan otomatis terisi saat Anda melakukan reservasi.</p>
                 
                 <div className="form-row">
@@ -285,6 +345,7 @@ export default function Member() {
                       placeholder="Nama lengkap Anda"
                       value={namaIbu}
                       onChange={(e) => setNamaIbu(e.target.value)}
+                      required
                     />
                   </div>
                   <div className="form-group">
@@ -311,6 +372,21 @@ export default function Member() {
                     />
                   </div>
                   <div className="form-group">
+                    <label htmlFor="profJenisKelamin">🚻 Jenis Kelamin Bayi</label>
+                    <select
+                      id="profJenisKelamin"
+                      value={jenisKelaminBayi}
+                      onChange={(e) => setJenisKelaminBayi(e.target.value)}
+                    >
+                      <option value="">— Pilih —</option>
+                      <option value="Laki-laki">Laki-laki</option>
+                      <option value="Perempuan">Perempuan</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
                     <label htmlFor="profWhatsapp">📞 Nomor WhatsApp</label>
                     <input 
                       type="tel" 
@@ -333,9 +409,162 @@ export default function Member() {
                   />
                 </div>
                 <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={saveLoading}>
-                  {saveLoading ? 'Menyimpan...' : 'Simpan Perubahan'}
+                  {saveLoading ? 'Menyimpan...' : 'Simpan Profil'}
                 </button>
               </form>
+            </div>
+          ) : (
+            /* Logged In Dashboard View — Display-only profile + Programs + Telegram */
+            <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+              {/* Header */}
+              <div className="profile-card" style={{ marginBottom: '24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                  <div>
+                    <h2 style={{ marginBottom: '4px' }}>Halo, <span style={{ color: 'var(--pink-600)' }}>{namaIbu || 'Member'}</span>! 👋</h2>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{session.user.email}</p>
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                    {isAdmin && (
+                      <Link to="/admin" className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem' }}>
+                        ⚙️ Dashboard Admin
+                      </Link>
+                    )}
+                    <button onClick={handleLogout} className="btn btn-secondary" style={{ fontSize: '0.85rem' }}>🚪 Keluar</button>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                {/* Profile Info Card */}
+                <div className="profile-card animate-on-scroll" style={{ gridColumn: 'span 1' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <h3 style={{ margin: 0, fontSize: '1.1rem' }}>📋 Informasi Profil</h3>
+                    <button 
+                      onClick={() => setEditMode(true)} 
+                      className="btn btn-secondary" 
+                      style={{ fontSize: '0.8rem', padding: '6px 14px' }}
+                    >
+                      ✏️ Edit
+                    </button>
+                  </div>
+                  <InfoRow icon="👤" label="Nama Ibu" value={namaIbu} />
+                  <InfoRow icon="👶" label="Nama Bayi" value={namaBayi} />
+                  <InfoRow icon="🍼" label="Usia Bayi" value={usiaBayi} />
+                  <InfoRow icon="🚻" label="Jenis Kelamin Bayi" value={jenisKelaminBayi} />
+                  <InfoRow icon="📞" label="WhatsApp" value={whatsapp} />
+                  <InfoRow icon="📍" label="Alamat" value={alamat} />
+                </div>
+
+                {/* Quick Actions + Telegram */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  {/* Quick Actions Card */}
+                  <div className="profile-card animate-on-scroll">
+                    <h3 style={{ marginBottom: '16px', fontSize: '1.1rem' }}>⚡ Aksi Cepat</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <Link to="/reservasi" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                        📅 Reservasi Sekarang
+                      </Link>
+                      <Link to="/layanan" className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center' }}>
+                        ✨ Lihat Layanan
+                      </Link>
+                      <a href="https://wa.me/6285267474943" target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center' }}>
+                        💬 Hubungi Kami
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Telegram Card */}
+                  {telegramLink && (
+                    <div className="animate-on-scroll" style={{
+                      background: 'linear-gradient(135deg, #0088cc15, #0088cc08)',
+                      borderRadius: 'var(--radius-xl)',
+                      padding: '28px',
+                      border: '1px solid #0088cc30',
+                      textAlign: 'center',
+                    }}>
+                      <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>📣</div>
+                      <h3 style={{ fontSize: '1.1rem', color: '#0088cc', marginBottom: '8px' }}>Join Grup Telegram</h3>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: 1.6 }}>
+                        Bergabung di grup Telegram eksklusif kami untuk info terbaru, tips, dan promo khusus member!
+                      </p>
+                      <a 
+                        href={telegramLink} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          background: '#0088cc',
+                          color: 'white',
+                          padding: '12px 24px',
+                          borderRadius: 'var(--radius-full)',
+                          fontWeight: 700,
+                          fontSize: '0.9rem',
+                          textDecoration: 'none',
+                          transition: 'all 0.2s ease',
+                          boxShadow: '0 4px 12px rgba(0, 136, 204, 0.3)',
+                        }}
+                        onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                        onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                      >
+                        ✈️ Gabung Sekarang
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Member Programs Section */}
+              <div style={{ marginTop: '32px' }}>
+                <h3 className="animate-on-scroll" style={{ fontSize: '1.2rem', marginBottom: '20px' }}>🎁 Program Khusus Member</h3>
+                {memberPrograms.length > 0 ? (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+                    {memberPrograms.map((prog) => (
+                      <div key={prog.id} className="animate-on-scroll" style={{
+                        background: 'white',
+                        borderRadius: 'var(--radius-xl)',
+                        padding: '28px',
+                        border: '1px solid var(--pink-200)',
+                        boxShadow: '0 4px 16px rgba(236, 72, 153, 0.06)',
+                        position: 'relative',
+                        overflow: 'hidden',
+                      }}>
+                        {prog.discount_percent > 0 && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '16px',
+                            right: '16px',
+                            background: 'linear-gradient(135deg, var(--pink-500), var(--pink-600))',
+                            color: 'white',
+                            padding: '4px 12px',
+                            borderRadius: 'var(--radius-full)',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                          }}>
+                            Diskon {prog.discount_percent}%
+                          </div>
+                        )}
+                        <div style={{ fontSize: '2rem', marginBottom: '12px' }}>🎉</div>
+                        <h4 style={{ fontSize: '1rem', marginBottom: '8px', color: 'var(--text-primary)', paddingRight: prog.discount_percent > 0 ? '80px' : '0' }}>{prog.title}</h4>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{prog.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="animate-on-scroll" style={{
+                    background: 'var(--pink-50)',
+                    borderRadius: 'var(--radius-xl)',
+                    padding: '40px',
+                    textAlign: 'center',
+                    border: '1px dashed var(--pink-200)',
+                  }}>
+                    <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🌟</div>
+                    <h4 style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Belum ada program member aktif saat ini</h4>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '8px' }}>Nantikan program eksklusif dari Intan Miracle untuk Anda!</p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

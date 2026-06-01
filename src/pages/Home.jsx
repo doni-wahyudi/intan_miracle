@@ -143,9 +143,9 @@ export default function Home() {
               <Link to="/reservasi" className="btn btn-primary btn-lg">
                 ➡️ Reservasi Sekarang
               </Link>
-              <Link to="/layanan" className="btn btn-secondary btn-lg">
-                ➡️ Lihat Layanan
-              </Link>
+              <a href="https://wa.me/6285267474943" target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-lg">
+                💬 Free Konsultasi
+              </a>
             </div>
           </div>
           <div className="hero-visual">

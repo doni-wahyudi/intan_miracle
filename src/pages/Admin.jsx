@@ -22,6 +22,11 @@ export default function Admin() {
   const [gallery, setGallery] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
   const [certificates, setCertificates] = useState([]);
+  const [memberProgramsList, setMemberProgramsList] = useState([]);
+
+  // Site Settings
+  const [telegramLink, setTelegramLink] = useState('');
+  const [settingsLoading, setSettingsLoading] = useState(false);
 
   // Stats
   const [stats, setStats] = useState({ totalRes: 0, pendingRes: 0, monthRes: 0 });
@@ -174,6 +179,12 @@ export default function Admin() {
       case 'sertifikat':
         fetchCertificates();
         break;
+      case 'program':
+        fetchMemberPrograms();
+        break;
+      case 'pengaturan':
+        fetchSettings();
+        break;
       default:
         break;
     }
@@ -227,6 +238,51 @@ export default function Admin() {
     if (!error && data) setCertificates(data);
   };
 
+  const fetchMemberPrograms = async () => {
+    const { data, error } = await supabase.from('member_programs').select('*').order('sort_order', { ascending: true });
+    if (!error && data) setMemberProgramsList(data);
+  };
+
+  const fetchSettings = async () => {
+    setSettingsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('*')
+        .eq('key', 'telegram_link')
+        .single();
+      if (!error && data) setTelegramLink(data.value);
+    } catch (err) {
+      console.error('Error fetching settings:', err);
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    setSettingsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('site_settings')
+        .upsert({ key: 'telegram_link', value: telegramLink, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+      if (error) throw error;
+      alert('✅ Pengaturan berhasil disimpan!');
+    } catch (err) {
+      alert('❌ Gagal menyimpan: ' + err.message);
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
+  const handleToggleProgram = async (id, currentActive) => {
+    const { error } = await supabase.from('member_programs').update({ is_active: !currentActive }).eq('id', id);
+    if (error) {
+      alert('❌ Gagal mengubah status: ' + error.message);
+    } else {
+      fetchMemberPrograms();
+    }
+  };
+
   // --- API CALLS: CREATE / UPDATE ---
   const handleFormSubmit = async (e) => {
     e.preventDefault();
@@ -238,6 +294,7 @@ export default function Admin() {
       case 'galeri': tableName = 'gallery'; break;
       case 'testimoni': tableName = 'testimonials'; break;
       case 'sertifikat': tableName = 'certificates'; break;
+      case 'program': tableName = 'member_programs'; break;
       default: return;
     }
 
@@ -307,6 +364,9 @@ export default function Admin() {
       initial.stars = 5; initial.avatar_initials = 'IB'; initial.avatar_bg = 'var(--pink-400)';
     } else if (currentTab === 'sertifikat') {
       initial.image_url = ''; initial.title = ''; initial.sort_order = 0;
+    } else if (currentTab === 'program') {
+      initial.title = ''; initial.description = ''; initial.discount_percent = 0;
+      initial.is_active = true; initial.sort_order = 0;
     }
     setFormFields(initial);
     setModalOpen(true);
@@ -335,7 +395,9 @@ export default function Admin() {
     layanan: { title: 'Manajemen Layanan', subtitle: 'Atur paket terapi, pijat, serta biaya layanan', hasAdd: true },
     galeri: { title: 'Galeri Kegiatan', subtitle: 'Kelola dokumentasi foto kebahagiaan ibu & bayi', hasAdd: true },
     testimoni: { title: 'Ulasan & Testimoni', subtitle: 'Kelola testimoni kehangatan pelanggan di website', hasAdd: true },
-    sertifikat: { title: 'Sertifikat & Lisensi', subtitle: 'Kelola dokumentasi bukti kompetensi profesionalisme owner', hasAdd: true }
+    sertifikat: { title: 'Sertifikat & Lisensi', subtitle: 'Kelola dokumentasi bukti kompetensi profesionalisme owner', hasAdd: true },
+    program: { title: 'Program Member', subtitle: 'Kelola program diskon dan keuntungan eksklusif untuk member', hasAdd: true },
+    pengaturan: { title: 'Pengaturan', subtitle: 'Konfigurasi website dan tautan grup Telegram', hasAdd: false }
   };
 
   // Format Helper
@@ -466,6 +528,12 @@ export default function Admin() {
           </button>
           <button className={`menu-item ${currentTab === 'sertifikat' ? 'active' : ''}`} onClick={() => { setCurrentTab('sertifikat'); setMobileSidebarActive(false); }}>
             <span className="menu-icon">📜</span> Kelola Sertifikat
+          </button>
+          <button className={`menu-item ${currentTab === 'program' ? 'active' : ''}`} onClick={() => { setCurrentTab('program'); setMobileSidebarActive(false); }}>
+            <span className="menu-icon">🎁</span> Program Member
+          </button>
+          <button className={`menu-item ${currentTab === 'pengaturan' ? 'active' : ''}`} onClick={() => { setCurrentTab('pengaturan'); setMobileSidebarActive(false); }}>
+            <span className="menu-icon">⚙️</span> Pengaturan
           </button>
         </div>
         <div className="sidebar-footer">
@@ -780,8 +848,81 @@ export default function Admin() {
               </div>
             </div>
           )}
+          {/* 8. PROGRAM MEMBER TAB */}
+          {currentTab === 'program' && (
+            <div className="tab-panel active">
+              <div className="admin-grid" style={{ padding: 0 }}>
+                {memberProgramsList.length === 0 ? (
+                  <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--text-muted)', padding: '40px' }}>Belum ada program member.</div>
+                ) : (
+                  memberProgramsList.map((prog) => (
+                    <div className="data-card" key={prog.id}>
+                      <div className="card-content">
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                          <span style={{ fontSize: '1.6rem' }}>🎁</span>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, color: prog.is_active ? '#16a34a' : '#9ca3af' }}>
+                            <input 
+                              type="checkbox" 
+                              checked={prog.is_active} 
+                              onChange={() => handleToggleProgram(prog.id, prog.is_active)}
+                              style={{ width: '18px', height: '18px', accentColor: 'var(--pink-500)' }}
+                            />
+                            {prog.is_active ? 'Aktif' : 'Nonaktif'}
+                          </label>
+                        </div>
+                        <h3>{prog.title}</h3>
+                        {prog.discount_percent > 0 && (
+                          <div style={{ display: 'inline-block', background: 'linear-gradient(135deg, var(--pink-500), var(--pink-600))', color: 'white', padding: '3px 10px', borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontWeight: 700, marginBottom: '8px' }}>
+                            Diskon {prog.discount_percent}%
+                          </div>
+                        )}
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{prog.description}</p>
+                        <div className="card-meta">Urutan: <strong>{prog.sort_order}</strong></div>
+                        <div className="card-footer-actions">
+                          <button onClick={() => openEditModal(prog)} className="btn btn-secondary btn-small btn-warning">✏️ Edit</button>
+                          <button onClick={() => handleDeleteItem('member_programs', prog.id)} className="btn btn-secondary btn-small btn-danger">🗑️ Hapus</button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
 
-
+          {/* 9. PENGATURAN TAB */}
+          {currentTab === 'pengaturan' && (
+            <div className="tab-panel active">
+              <div className="admin-card">
+                <div className="card-header">
+                  <h2>📣 Telegram Grup Member</h2>
+                </div>
+                <div style={{ padding: '32px' }}>
+                  <p style={{ color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                    Masukkan link undangan grup Telegram agar ditampilkan di halaman Member. Kosongkan untuk menyembunyikan fitur ini.
+                  </p>
+                  <div className="form-group" style={{ marginBottom: '20px' }}>
+                    <label style={{ fontWeight: 600 }}>🔗 Link Grup Telegram</label>
+                    <input 
+                      type="url" 
+                      className="form-control" 
+                      placeholder="https://t.me/+xxxxx atau https://t.me/namagrup" 
+                      value={telegramLink}
+                      onChange={(e) => setTelegramLink(e.target.value)}
+                    />
+                  </div>
+                  <button 
+                    onClick={handleSaveSettings} 
+                    className="btn btn-primary" 
+                    disabled={settingsLoading}
+                    style={{ padding: '12px 32px' }}
+                  >
+                    {settingsLoading ? 'Menyimpan...' : '💾 Simpan Pengaturan'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
         </div>
       </main>
@@ -997,6 +1138,39 @@ export default function Admin() {
                     <div className="form-group">
                       <label>Urutan Urut (Mulai dari 0)</label>
                       <input type="number" className="form-control" value={formFields.sort_order || 0} onChange={(e) => updateField('sort_order', parseInt(e.target.value, 10))} required />
+                    </div>
+                  </>
+                )}
+
+                {/* --- PROGRAM MEMBER FORM FIELDS --- */}
+                {currentTab === 'program' && (
+                  <>
+                    <div className="form-group">
+                      <label>Judul Program</label>
+                      <input type="text" className="form-control" placeholder="Contoh: Diskon Paket Baby Spa" value={formFields.title || ''} onChange={(e) => updateField('title', e.target.value)} required />
+                    </div>
+                    <div className="form-group">
+                      <label>Deskripsi Program</label>
+                      <textarea className="form-control" rows="3" placeholder="Jelaskan keuntungan program ini untuk member" value={formFields.description || ''} onChange={(e) => updateField('description', e.target.value)} required></textarea>
+                    </div>
+                    <div className="form-group">
+                      <label>Persentase Diskon (%)</label>
+                      <input type="number" min="0" max="100" className="form-control" value={formFields.discount_percent || 0} onChange={(e) => updateField('discount_percent', parseInt(e.target.value, 10))} />
+                    </div>
+                    <div className="form-group">
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={formFields.is_active !== false}
+                          onChange={(e) => updateField('is_active', e.target.checked)}
+                          style={{ width: '18px', height: '18px', accentColor: 'var(--pink-500)' }}
+                        />
+                        Program Aktif
+                      </label>
+                    </div>
+                    <div className="form-group">
+                      <label>Urutan Tampil</label>
+                      <input type="number" className="form-control" value={formFields.sort_order || 0} onChange={(e) => updateField('sort_order', parseInt(e.target.value, 10))} />
                     </div>
                   </>
                 )}
