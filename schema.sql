@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS public.services (
     name TEXT NOT NULL,
     category TEXT NOT NULL,
     price NUMERIC NOT NULL,
+    price_clinic NUMERIC DEFAULT 0,
     description TEXT NOT NULL,
     duration TEXT,
     icon TEXT,

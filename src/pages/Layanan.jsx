@@ -153,10 +153,15 @@ export default function Layanan() {
                   {srv.customPrice ? (
                     srv.customPrice
                   ) : (
-                    <div className="price-row" style={srv.customList ? { marginTop: '20px' } : {}}>
-                      <div className="simple-price">
-                        {srv.duration ? <span className="price-label">{srv.duration}:</span> : ''} {formatPrice(srv.price)}
+                    <div className="price-row" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: srv.customList ? '20px' : '12px' }}>
+                      <div className="simple-price" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'var(--pink-50)', padding: '6px 12px', borderRadius: 'var(--radius-full)', fontSize: '0.82rem', color: 'var(--pink-700)', fontWeight: 600 }}>
+                        🏠 Homecare: {formatPrice(srv.price)}
                       </div>
+                      {srv.price_clinic > 0 && (
+                        <div className="simple-price" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(236, 72, 153, 0.08)', padding: '6px 12px', borderRadius: 'var(--radius-full)', fontSize: '0.82rem', color: 'var(--pink-700)', fontWeight: 600 }}>
+                          🏥 Clinic: {formatPrice(srv.price_clinic)}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -243,10 +248,15 @@ export default function Layanan() {
                 <div className="service-info">
                   <h3>{srv.name}</h3>
                   <p>{srv.description}</p>
-                  <div className="price-row">
-                    <div className="simple-price">
-                      {srv.duration ? <span className="price-label">{srv.duration}:</span> : ''} {formatPrice(srv.price)}
+                  <div className="price-row" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '12px' }}>
+                    <div className="simple-price" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'var(--pink-50)', padding: '6px 12px', borderRadius: 'var(--radius-full)', fontSize: '0.82rem', color: 'var(--pink-700)', fontWeight: 600 }}>
+                      🏠 Homecare: {formatPrice(srv.price)}
                     </div>
+                    {srv.price_clinic > 0 && (
+                      <div className="simple-price" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(236, 72, 153, 0.08)', padding: '6px 12px', borderRadius: 'var(--radius-full)', fontSize: '0.82rem', color: 'var(--pink-700)', fontWeight: 600 }}>
+                        🏥 Clinic: {formatPrice(srv.price_clinic)}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

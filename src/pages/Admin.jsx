@@ -383,7 +383,7 @@ export default function Admin() {
       initial.title = ''; initial.slug = ''; initial.category = 'Perawatan Bayi';
       initial.summary = ''; initial.content = ''; initial.image_url = '';
     } else if (currentTab === 'layanan') {
-      initial.name = ''; initial.category = 'baby'; initial.price = 0;
+      initial.name = ''; initial.category = 'baby'; initial.price = 0; initial.price_clinic = 0;
       initial.description = ''; initial.duration = ''; initial.icon = '🌸';
     } else if (currentTab === 'galeri') {
       initial.image_url = ''; initial.caption = '';
@@ -575,8 +575,8 @@ export default function Admin() {
             <span className="menu-icon">📱</span> Poster & QR Code
           </button>
         </div>
-        <div className="sidebar-footer">
-          <button onClick={handleLogout} className="btn btn-secondary" style={{ width: '100%' }}>Keluar</button>
+        <div className="sidebar-footer" style={{ display: 'flex', justifyContent: 'center', padding: '16px 0' }}>
+          <button onClick={handleLogout} className="btn btn-secondary" style={{ margin: '0 auto', minWidth: '140px', display: 'inline-flex', justifyContent: 'center' }}>🚪 Keluar</button>
         </div>
       </aside>
 
@@ -918,7 +918,10 @@ export default function Admin() {
                           <span className="card-tag" style={{ position: 'static', textTransform: 'uppercase' }}>{srv.category === 'baby' ? 'Bayi' : 'Ibu'}</span>
                         </div>
                         <h3>{srv.name}</h3>
-                        <div className="card-price">Rp{parseInt(srv.price).toLocaleString('id-ID')}</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '12px' }}>
+                          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>🏠 Homecare: <strong style={{ color: 'var(--pink-600)' }}>Rp{parseInt(srv.price).toLocaleString('id-ID')}</strong></div>
+                          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>🏥 Clinic: <strong style={{ color: 'var(--pink-600)' }}>{srv.price_clinic ? `Rp${parseInt(srv.price_clinic).toLocaleString('id-ID')}` : 'Rp0'}</strong></div>
+                        </div>
                         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{srv.description}</p>
                         <div className="card-meta">⏱️ Durasi: {srv.duration || '-'}</div>
                         <div className="card-footer-actions">
@@ -1289,9 +1292,15 @@ export default function Admin() {
                         <option value="mom">Ibu</option>
                       </select>
                     </div>
-                    <div className="form-group">
-                      <label>Biaya (IDR)</label>
-                      <input type="number" className="form-control" value={formFields.price || 0} onChange={(e) => updateField('price', parseFloat(e.target.value))} required />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                      <div className="form-group">
+                        <label>Harga Homecare (IDR)</label>
+                        <input type="number" className="form-control" value={formFields.price || 0} onChange={(e) => updateField('price', parseFloat(e.target.value))} required />
+                      </div>
+                      <div className="form-group">
+                        <label>Harga Clinic Care (IDR, Opsional)</label>
+                        <input type="number" className="form-control" value={formFields.price_clinic || 0} onChange={(e) => updateField('price_clinic', parseFloat(e.target.value))} />
+                      </div>
                     </div>
                     <div className="form-group">
                       <label>Deskripsi Layanan</label>
