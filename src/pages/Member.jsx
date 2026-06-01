@@ -287,9 +287,7 @@ export default function Member() {
                       required 
                     />
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: '12px' }}>
-                    <button type="submit" className="btn btn-primary" style={{ minWidth: '160px' }}>Masuk</button>
-                  </div>
+                  <button type="submit" className="btn btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>Masuk</button>
                 </form>
               ) : (
                 /* Register Form */
@@ -317,9 +315,7 @@ export default function Member() {
                       required 
                     />
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: '12px' }}>
-                    <button type="submit" className="btn btn-primary" style={{ minWidth: '160px' }}>Daftar Member</button>
-                  </div>
+                  <button type="submit" className="btn btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>Daftar Member</button>
                 </form>
               )}
 
