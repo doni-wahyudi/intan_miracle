@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS public.articles (
     content TEXT NOT NULL,
     image_url TEXT NOT NULL,
     author TEXT DEFAULT 'Bdn. Intan Purnama Sari, S.Keb., CBMT',
+    is_featured BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -23,6 +24,12 @@ CREATE TABLE IF NOT EXISTS public.services (
     category TEXT NOT NULL,
     price NUMERIC NOT NULL,
     price_clinic NUMERIC DEFAULT 0,
+    price_age_0_1 NUMERIC DEFAULT 0,
+    price_age_1_2 NUMERIC DEFAULT 0,
+    price_age_2_plus NUMERIC DEFAULT 0,
+    price_clinic_age_0_1 NUMERIC DEFAULT 0,
+    price_clinic_age_1_2 NUMERIC DEFAULT 0,
+    price_clinic_age_2_plus NUMERIC DEFAULT 0,
     description TEXT NOT NULL,
     duration TEXT,
     icon TEXT,

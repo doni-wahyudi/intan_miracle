@@ -323,9 +323,37 @@ export default function Admin() {
 
     const dataPayload = { ...formFields };
     
+    // Differentiate price management based on baby vs non-baby categories
+    if (currentTab === 'layanan') {
+      if (dataPayload.category === 'baby') {
+        dataPayload.price = 0;
+        dataPayload.price_clinic = 0;
+      } else {
+        dataPayload.price_age_0_1 = 0;
+        dataPayload.price_age_1_2 = 0;
+        dataPayload.price_age_2_plus = 0;
+        dataPayload.price_clinic_age_0_1 = 0;
+        dataPayload.price_clinic_age_1_2 = 0;
+        dataPayload.price_clinic_age_2_plus = 0;
+      }
+    }
+    
     // Auto populate slug for articles if not custom specified
     if (currentTab === 'artikel' && !dataPayload.slug && dataPayload.title) {
       dataPayload.slug = dataPayload.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '');
+    }
+
+    // If setting this article as featured, reset all other articles' is_featured flag
+    if (currentTab === 'artikel' && dataPayload.is_featured) {
+      try {
+        if (modalMode === 'add') {
+          await supabase.from('articles').update({ is_featured: false }).neq('id', '00000000-0000-0000-0000-000000000000');
+        } else {
+          await supabase.from('articles').update({ is_featured: false }).neq('id', editId);
+        }
+      } catch (err) {
+        console.error("Error resetting other featured articles:", err);
+      }
     }
 
     let error = null;
@@ -387,9 +415,11 @@ export default function Admin() {
     const initial = {};
     if (currentTab === 'artikel') {
       initial.title = ''; initial.slug = ''; initial.category = 'Perawatan Bayi';
-      initial.summary = ''; initial.content = ''; initial.image_url = '';
+      initial.summary = ''; initial.content = ''; initial.image_url = ''; initial.is_featured = false;
     } else if (currentTab === 'layanan') {
       initial.name = ''; initial.category = 'baby'; initial.price = 0; initial.price_clinic = 0;
+      initial.price_age_0_1 = 0; initial.price_age_1_2 = 0; initial.price_age_2_plus = 0;
+      initial.price_clinic_age_0_1 = 0; initial.price_clinic_age_1_2 = 0; initial.price_clinic_age_2_plus = 0;
       initial.description = ''; initial.duration = ''; initial.icon = '🌸';
     } else if (currentTab === 'galeri') {
       initial.image_url = ''; initial.caption = '';
@@ -946,6 +976,9 @@ export default function Admin() {
                       <div className="card-image-wrapper">
                         <img src={art.image_url} alt={art.title} />
                         <span className="card-tag">{art.category}</span>
+                        {art.is_featured && (
+                          <span className="card-tag" style={{ right: 'auto', left: '12px', background: 'var(--gradient-cta)', color: 'white', fontWeight: 700 }}>🌟 Utama</span>
+                        )}
                       </div>
                       <div className="card-content">
                         <div className="card-meta">✍️ {art.author} | 📅 {formatDate(art.created_at)}</div>
@@ -975,12 +1008,34 @@ export default function Admin() {
                       <div className="card-content">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
                           <span style={{ fontSize: '1.8rem' }}>{srv.icon || '🌸'}</span>
-                          <span className="card-tag" style={{ position: 'static', textTransform: 'uppercase' }}>{srv.category === 'baby' ? 'Bayi' : 'Ibu'}</span>
+                          <span className="card-tag" style={{ position: 'static', textTransform: 'uppercase' }}>
+                            {srv.category === 'baby' ? 'Bayi' : srv.category === 'mom' ? 'Ibu' : 'Laktasi'}
+                          </span>
                         </div>
                         <h3>{srv.name}</h3>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '12px' }}>
-                          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>🏠 Homecare: <strong style={{ color: 'var(--pink-600)' }}>Rp{parseInt(srv.price).toLocaleString('id-ID')}</strong></div>
-                          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>🏥 Clinic: <strong style={{ color: 'var(--pink-600)' }}>{srv.price_clinic ? `Rp${parseInt(srv.price_clinic).toLocaleString('id-ID')}` : 'Rp0'}</strong></div>
+                          {srv.category === 'baby' ? (
+                            <>
+                              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>🏠 Usia (Homecare):</div>
+                              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', paddingLeft: '10px' }}>• 0-1th: <strong>Rp{parseInt(srv.price_age_0_1).toLocaleString('id-ID')}</strong></div>
+                              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', paddingLeft: '10px' }}>• 1-2th: <strong>Rp{parseInt(srv.price_age_1_2).toLocaleString('id-ID')}</strong></div>
+                              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', paddingLeft: '10px' }}>• &gt;2th: <strong>Rp{parseInt(srv.price_age_2_plus).toLocaleString('id-ID')}</strong></div>
+                              
+                              {srv.price_clinic_age_0_1 > 0 && (
+                                <>
+                                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600, marginTop: '6px' }}>🏥 Usia (Clinic Care):</div>
+                                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', paddingLeft: '10px' }}>• 0-1th: <strong>Rp{parseInt(srv.price_clinic_age_0_1).toLocaleString('id-ID')}</strong></div>
+                                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', paddingLeft: '10px' }}>• 1-2th: <strong>Rp{parseInt(srv.price_clinic_age_1_2).toLocaleString('id-ID')}</strong></div>
+                                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', paddingLeft: '10px' }}>• &gt;2th: <strong>Rp{parseInt(srv.price_clinic_age_2_plus).toLocaleString('id-ID')}</strong></div>
+                                </>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>🏠 Homecare: <strong style={{ color: 'var(--pink-600)' }}>Rp{parseInt(srv.price).toLocaleString('id-ID')}</strong></div>
+                              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>🏥 Clinic: <strong style={{ color: 'var(--pink-600)' }}>{srv.price_clinic ? `Rp${parseInt(srv.price_clinic).toLocaleString('id-ID')}` : 'Rp0'}</strong></div>
+                            </>
+                          )}
                         </div>
                         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{srv.description}</p>
                         <div className="card-meta">⏱️ Durasi: {srv.duration || '-'}</div>
@@ -1299,6 +1354,16 @@ export default function Admin() {
                         />
                       </div>
                     </div>
+                    <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px', marginBottom: '16px' }}>
+                      <input 
+                        type="checkbox" 
+                        id="is_featured" 
+                        checked={formFields.is_featured || false} 
+                        onChange={(e) => updateField('is_featured', e.target.checked)} 
+                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                      />
+                      <label htmlFor="is_featured" style={{ fontWeight: 600, cursor: 'pointer', margin: 0 }}>🌟 Jadikan Artikel Utama (Tampil Paling Atas)</label>
+                    </div>
                     <div className="form-group">
                       <label>Isi Lengkap Artikel (Mendukung HTML)</label>
                       <textarea className="form-control" rows="6" value={formFields.content || ''} onChange={(e) => updateField('content', e.target.value)} required></textarea>
@@ -1318,18 +1383,58 @@ export default function Admin() {
                       <select className="form-control" value={formFields.category || ''} onChange={(e) => updateField('category', e.target.value)}>
                         <option value="baby">Bayi</option>
                         <option value="mom">Ibu</option>
+                        <option value="lactation">Laktasi (Konselor Laktasi)</option>
                       </select>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                      <div className="form-group">
-                        <label>Harga Homecare (IDR)</label>
-                        <input type="number" className="form-control" value={formFields.price || 0} onChange={(e) => updateField('price', parseFloat(e.target.value))} required />
+                    {formFields.category === 'baby' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px', background: 'var(--pink-50)', padding: '16px', borderRadius: '12px', border: '1px solid var(--pink-100)' }}>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--pink-700)' }}>👶 Atur Harga Berdasarkan Usia (Homecare & Clinic Care)</div>
+                        
+                        {/* Homecare Prices Grid */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                          <div className="form-group" style={{ margin: 0 }}>
+                            <label style={{ fontSize: '0.78rem', fontWeight: 600 }}>0-1th (Homecare)</label>
+                            <input type="number" className="form-control" style={{ fontSize: '0.82rem', padding: '6px 8px' }} value={formFields.price_age_0_1 || 0} onChange={(e) => updateField('price_age_0_1', parseFloat(e.target.value))} />
+                          </div>
+                          <div className="form-group" style={{ margin: 0 }}>
+                            <label style={{ fontSize: '0.78rem', fontWeight: 600 }}>1-2th (Homecare)</label>
+                            <input type="number" className="form-control" style={{ fontSize: '0.82rem', padding: '6px 8px' }} value={formFields.price_age_1_2 || 0} onChange={(e) => updateField('price_age_1_2', parseFloat(e.target.value))} />
+                          </div>
+                          <div className="form-group" style={{ margin: 0 }}>
+                            <label style={{ fontSize: '0.78rem', fontWeight: 600 }}>&gt;2th (Homecare)</label>
+                            <input type="number" className="form-control" style={{ fontSize: '0.82rem', padding: '6px 8px' }} value={formFields.price_age_2_plus || 0} onChange={(e) => updateField('price_age_2_plus', parseFloat(e.target.value))} />
+                          </div>
+                        </div>
+
+                        {/* Clinic Care Prices Grid */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginTop: '4px' }}>
+                          <div className="form-group" style={{ margin: 0 }}>
+                            <label style={{ fontSize: '0.78rem', fontWeight: 600 }}>0-1th (Clinic Care)</label>
+                            <input type="number" className="form-control" style={{ fontSize: '0.82rem', padding: '6px 8px' }} value={formFields.price_clinic_age_0_1 || 0} onChange={(e) => updateField('price_clinic_age_0_1', parseFloat(e.target.value))} />
+                          </div>
+                          <div className="form-group" style={{ margin: 0 }}>
+                            <label style={{ fontSize: '0.78rem', fontWeight: 600 }}>1-2th (Clinic Care)</label>
+                            <input type="number" className="form-control" style={{ fontSize: '0.82rem', padding: '6px 8px' }} value={formFields.price_clinic_age_1_2 || 0} onChange={(e) => updateField('price_clinic_age_1_2', parseFloat(e.target.value))} />
+                          </div>
+                          <div className="form-group" style={{ margin: 0 }}>
+                            <label style={{ fontSize: '0.78rem', fontWeight: 600 }}>&gt;2th (Clinic Care)</label>
+                            <input type="number" className="form-control" style={{ fontSize: '0.82rem', padding: '6px 8px' }} value={formFields.price_clinic_age_2_plus || 0} onChange={(e) => updateField('price_clinic_age_2_plus', parseFloat(e.target.value))} />
+                          </div>
+                        </div>
                       </div>
-                      <div className="form-group">
-                        <label>Harga Clinic Care (IDR, Opsional)</label>
-                        <input type="number" className="form-control" value={formFields.price_clinic || 0} onChange={(e) => updateField('price_clinic', parseFloat(e.target.value))} />
+                    )}
+                    {formFields.category !== 'baby' && (
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                        <div className="form-group">
+                          <label>Harga Homecare (IDR)</label>
+                          <input type="number" className="form-control" value={formFields.price || 0} onChange={(e) => updateField('price', parseFloat(e.target.value))} required />
+                        </div>
+                        <div className="form-group">
+                          <label>Harga Clinic Care (IDR, Opsional)</label>
+                          <input type="number" className="form-control" value={formFields.price_clinic || 0} onChange={(e) => updateField('price_clinic', parseFloat(e.target.value))} />
+                        </div>
                       </div>
-                    </div>
+                    )}
                     <div className="form-group">
                       <label>Deskripsi Layanan</label>
                       <textarea className="form-control" rows="3" value={formFields.description || ''} onChange={(e) => updateField('description', e.target.value)} required></textarea>

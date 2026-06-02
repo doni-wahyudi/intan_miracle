@@ -113,6 +113,34 @@ export default function Layanan() {
       price: 100000
     }
   ];
+  
+  const fallbackLactationServices = [
+    {
+      icon: '👩‍🍼',
+      name: 'Konsultasi Menyusui',
+      description: 'Meliputi evaluasi menyusui, pelekatan, dan teknik menyusui yang benar.',
+      price: 245000,
+      price_clinic: 450000
+    },
+    {
+      icon: '🍼',
+      name: 'Pijat Laktasi',
+      description: 'Pemijatan payudara untuk membantu melancarkan ASI, disertai konsultasi menyusui.',
+      price: 150000
+    },
+    {
+      icon: '🍱',
+      name: 'Paket Lengkap',
+      description: 'Konsultasi menyusui + pijat laktasi + perah ASI.',
+      price: 600000
+    },
+    {
+      icon: '🏠',
+      name: 'Paket Lengkap (Homecare)',
+      description: 'Layanan lengkap yang dilakukan langsung di rumah: konsultasi, pijat laktasi, dan perah ASI.',
+      price: 650000
+    }
+  ];
 
   const formatPrice = (price) => {
     return `Rp${parseInt(price, 10).toLocaleString('id-ID')}`;
@@ -121,9 +149,11 @@ export default function Layanan() {
   // Determine active lists
   const babyServices = dbServices.filter(s => s.category === 'baby');
   const momServices = dbServices.filter(s => s.category === 'mom');
+  const lactationServices = dbServices.filter(s => s.category === 'lactation');
 
   const finalBabyServices = babyServices.length > 0 ? babyServices : fallbackBabyServices;
   const finalMomServices = momServices.length > 0 ? momServices : fallbackMomServices;
+  const finalLactationServices = lactationServices.length > 0 ? lactationServices : fallbackLactationServices;
 
   return (
     <div>
@@ -152,6 +182,26 @@ export default function Layanan() {
                   {srv.customList}
                   {srv.customPrice ? (
                     srv.customPrice
+                  ) : (srv.category === 'baby' || srv.price_age_0_1 > 0) ? (
+                    <div className="price-row" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
+                      {/* Homecare Prices */}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--pink-700)', minWidth: '90px' }}>🏠 Homecare:</span>
+                        <div className="simple-price" style={{ fontSize: '0.8rem', padding: '4px 10px', background: 'var(--pink-50)', color: 'var(--pink-700)', borderRadius: 'var(--radius-full)' }}><span className="price-label">0-1th:</span> {formatPrice(srv.price_age_0_1)}</div>
+                        <div className="simple-price" style={{ fontSize: '0.8rem', padding: '4px 10px', background: 'var(--pink-50)', color: 'var(--pink-700)', borderRadius: 'var(--radius-full)' }}><span className="price-label">1-2th:</span> {formatPrice(srv.price_age_1_2)}</div>
+                        <div className="simple-price" style={{ fontSize: '0.8rem', padding: '4px 10px', background: 'var(--pink-50)', color: 'var(--pink-700)', borderRadius: 'var(--radius-full)' }}><span className="price-label">&gt;2th:</span> {formatPrice(srv.price_age_2_plus)}</div>
+                      </div>
+                      
+                      {/* Clinic Care Prices */}
+                      {srv.price_clinic_age_0_1 > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', marginTop: '4px' }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--pink-700)', minWidth: '90px' }}>🏥 Clinic Care:</span>
+                          <div className="simple-price" style={{ fontSize: '0.8rem', padding: '4px 10px', background: 'rgba(236, 72, 153, 0.08)', color: 'var(--pink-700)', borderRadius: 'var(--radius-full)' }}><span className="price-label">0-1th:</span> {formatPrice(srv.price_clinic_age_0_1)}</div>
+                          <div className="simple-price" style={{ fontSize: '0.8rem', padding: '4px 10px', background: 'rgba(236, 72, 153, 0.08)', color: 'var(--pink-700)', borderRadius: 'var(--radius-full)' }}><span className="price-label">1-2th:</span> {formatPrice(srv.price_clinic_age_1_2)}</div>
+                          <div className="simple-price" style={{ fontSize: '0.8rem', padding: '4px 10px', background: 'rgba(236, 72, 153, 0.08)', color: 'var(--pink-700)', borderRadius: 'var(--radius-full)' }}><span className="price-label">&gt;2th:</span> {formatPrice(srv.price_clinic_age_2_plus)}</div>
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <div className="price-row" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: srv.customList ? '20px' : '12px' }}>
                       <div className="simple-price" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'var(--pink-50)', padding: '6px 12px', borderRadius: 'var(--radius-full)', fontSize: '0.82rem', color: 'var(--pink-700)', fontWeight: 600 }}>
@@ -272,49 +322,26 @@ export default function Layanan() {
             <h2>🤱 Konselor Laktasi</h2>
             <p>Dukungan penuh untuk perjalanan menyusui yang lancar</p>
           </div>
-
-          <div className="service-detail animate-on-scroll">
-            <div className="service-detail-icon">👩‍🍼</div>
-            <div className="service-info">
-              <h3>Konsultasi Menyusui</h3>
-              <p>Meliputi evaluasi menyusui, pelekatan, dan teknik menyusui yang benar.</p>
-              <div className="price-row">
-                <div className="simple-price">Rp245k - Rp450k</div>
+          <div className="grid-2" id="lactationServicesContainer">
+            {finalLactationServices.map((srv, i) => (
+              <div className="service-detail animate-on-scroll" key={i}>
+                <div className="service-detail-icon">{srv.icon || '🤱'}</div>
+                <div className="service-info">
+                  <h3>{srv.name}</h3>
+                  <p>{srv.description}</p>
+                  <div className="price-row" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '12px' }}>
+                    <div className="simple-price" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'var(--pink-50)', padding: '6px 12px', borderRadius: 'var(--radius-full)', fontSize: '0.82rem', color: 'var(--pink-700)', fontWeight: 600 }}>
+                      🏠 Homecare: {formatPrice(srv.price)}
+                    </div>
+                    {srv.price_clinic > 0 && (
+                      <div className="simple-price" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(236, 72, 153, 0.08)', padding: '6px 12px', borderRadius: 'var(--radius-full)', fontSize: '0.82rem', color: 'var(--pink-700)', fontWeight: 600 }}>
+                        🏥 Clinic: {formatPrice(srv.price_clinic)}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-
-          <div className="service-detail animate-on-scroll">
-            <div className="service-detail-icon">🍼</div>
-            <div className="service-info">
-              <h3>Pijat Laktasi</h3>
-              <p>Pemijatan payudara untuk membantu melancarkan ASI, disertai konsultasi menyusui.</p>
-              <div className="price-row">
-                <div className="simple-price">Rp150.000</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="service-detail animate-on-scroll">
-            <div className="service-detail-icon">🍱</div>
-            <div className="service-info">
-              <h3>Paket Lengkap</h3>
-              <p>Konsultasi menyusui + pijat laktasi + perah ASI.</p>
-              <div className="price-row">
-                <div className="simple-price">Rp600.000</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="service-detail animate-on-scroll">
-            <div className="service-detail-icon">🏠</div>
-            <div className="service-info">
-              <h3>Paket Lengkap (Homecare)</h3>
-              <p>Layanan lengkap yang dilakukan langsung di rumah: konsultasi, pijat laktasi, dan perah ASI.</p>
-              <div className="price-row">
-                <div className="simple-price">Rp650.000</div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>

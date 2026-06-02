@@ -72,8 +72,18 @@ export default function Reservasi() {
           .neq('status', 'rejected');
 
         if (!error && data) {
-          const booked = data.map(r => r.jam);
+          // Count reservations per time slot
+          const slotCounts = {};
+          data.forEach(r => {
+            if (r.jam) {
+              slotCounts[r.jam] = (slotCounts[r.jam] || 0) + 1;
+            }
+          });
+          
+          // Disable slots that have 1 or more bookings
+          const booked = Object.keys(slotCounts).filter(time => slotCounts[time] >= 1);
           setBookedSlots(booked);
+          
           if (jam && booked.includes(jam)) {
             setJam('');
           }
@@ -89,6 +99,26 @@ export default function Reservasi() {
     e.preventDefault();
     setLoading(true);
     setSubmitStatus('⌛ Memproses Reservasi...');
+
+    // Re-verify slot availability to prevent race conditions (max 1 per slot)
+    try {
+      const { data: existing, error: checkError } = await supabase
+        .from('reservations')
+        .select('id')
+        .eq('tanggal', tanggal)
+        .eq('jam', jam)
+        .neq('status', 'cancelled')
+        .neq('status', 'rejected');
+
+      if (!checkError && existing && existing.length >= 1) {
+        alert('⚠️ Mohon maaf, slot waktu ini baru saja penuh (maksimal 1 reservasi per slot). Silakan pilih slot waktu atau tanggal yang lain.');
+        setSubmitStatus('📩 Kirim Reservasi');
+        setLoading(false);
+        return;
+      }
+    } catch (err) {
+      console.error('Error double-checking slot:', err);
+    }
 
     // Save to Database
     let userId = null;
