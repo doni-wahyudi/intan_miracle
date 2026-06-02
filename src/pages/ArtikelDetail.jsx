@@ -223,6 +223,10 @@ export default function ArtikelDetail() {
     }
 
     setPdfLoading(true);
+    const currentScrollY = window.scrollY;
+
+    // Temporarily scroll to top to prevent html2canvas blank page scrolling bug!
+    window.scrollTo(0, 0);
 
     // Hide PDF button
     const btn = document.querySelector('.btn-download-pdf');
@@ -241,15 +245,14 @@ export default function ArtikelDetail() {
     target.insertBefore(logoHeader, target.firstChild);
 
     // Inject Logo Overlay
-    const imgDiv = target.querySelector('.featured-article-image');
-    let logoOverlay = null;
-    if (imgDiv) {
-      logoOverlay = document.createElement('img');
+    const articleImageDiv = target.querySelector('.featured-article-image');
+    if (articleImageDiv) {
+      const logoOverlay = document.createElement('img');
       logoOverlay.id = 'pdf-logo-overlay';
       logoOverlay.src = img('/Image/LOGO INTAN MIRACLE colour italic.webp');
       logoOverlay.style.cssText = 'position: absolute; top: 12px; left: 12px; height: 40px; background: rgba(255,255,255,0.85); padding: 6px 10px; border-radius: 8px; z-index: 5;';
-      imgDiv.style.position = 'relative';
-      imgDiv.appendChild(logoOverlay);
+      articleImageDiv.style.position = 'relative';
+      articleImageDiv.appendChild(logoOverlay);
     }
 
     // Inject Footer
@@ -262,15 +265,15 @@ export default function ArtikelDetail() {
     const fileName = `${cleanSlug}.pdf`;
 
     const opt = {
-      margin: [5, 5, 5, 5],
+      margin: [10, 10, 10, 10],
       filename: fileName,
       image: { type: 'jpeg', quality: 0.95 },
       html2canvas: {
         scale: 2,
+        useCORS: true,
         logging: false,
-        scrollY: 0,
-        windowWidth: target.scrollWidth,
-        useCORS: true
+        scrollX: 0,
+        scrollY: 0
       },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
       pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
@@ -284,7 +287,7 @@ export default function ArtikelDetail() {
         cleanup();
         alert('Gagal membuat PDF. Silakan coba lagi.');
       });
-    }, 300);
+    }, 400);
 
     function cleanup() {
       const header = document.getElementById('pdf-logo-header');
@@ -296,6 +299,9 @@ export default function ArtikelDetail() {
 
       if (btn) btn.style.display = '';
       setPdfLoading(false);
+
+      // Restore original scroll position
+      window.scrollTo(0, currentScrollY);
     }
   };
 
@@ -313,7 +319,7 @@ export default function ArtikelDetail() {
       <section className="page-header">
         <div className="container">
           <h1 className="text-gradient">Ruang Edukasi untuk Ibu</h1>
-          <p>Kembali ke <Link to="/artikel" style={{ color: 'white', textDecoration: 'underline' }}>semua artikel</Link></p>
+          <p>Kembali ke <Link to="/artikel" style={{ color: 'var(--pink-600)', fontWeight: 600, textDecoration: 'underline' }}>semua artikel</Link></p>
         </div>
       </section>
 

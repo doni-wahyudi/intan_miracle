@@ -56,6 +56,10 @@ export default function Artikel() {
     }
 
     setPdfLoading(true);
+    const currentScrollY = window.scrollY;
+
+    // Temporarily scroll to top to prevent html2canvas blank page scrolling bug!
+    window.scrollTo(0, 0);
 
     // Hide PDF button
     const btn = document.querySelector('.btn-download-pdf');
@@ -75,9 +79,8 @@ export default function Artikel() {
 
     // Inject Logo Overlay
     const articleImageDiv = article.querySelector('.featured-article-image');
-    let logoOverlay = null;
     if (articleImageDiv) {
-      logoOverlay = document.createElement('img');
+      const logoOverlay = document.createElement('img');
       logoOverlay.id = 'pdf-logo-overlay';
       logoOverlay.src = img('/Image/LOGO INTAN MIRACLE colour italic.webp');
       logoOverlay.style.cssText = 'position: absolute; top: 12px; left: 12px; height: 40px; background: rgba(255,255,255,0.85); padding: 6px 10px; border-radius: 8px; z-index: 5;';
@@ -95,15 +98,15 @@ export default function Artikel() {
     const fileName = 'perawatan-ibu-dan-bayi-sentuhan-cinta.pdf';
 
     const opt = {
-      margin: [5, 5, 5, 5],
+      margin: [10, 10, 10, 10],
       filename: fileName,
       image: { type: 'jpeg', quality: 0.95 },
       html2canvas: {
         scale: 2,
+        useCORS: true,
         logging: false,
-        scrollY: 0,
-        windowWidth: article.scrollWidth,
-        useCORS: true
+        scrollX: 0,
+        scrollY: 0
       },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
       pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
@@ -117,7 +120,7 @@ export default function Artikel() {
         cleanup();
         alert('Gagal membuat PDF. Silakan coba lagi.');
       });
-    }, 300);
+    }, 400);
 
     function cleanup() {
       const header = document.getElementById('pdf-logo-header');
@@ -129,6 +132,9 @@ export default function Artikel() {
 
       if (btn) btn.style.display = '';
       setPdfLoading(false);
+
+      // Restore original scroll position
+      window.scrollTo(0, currentScrollY);
     }
   };
 
