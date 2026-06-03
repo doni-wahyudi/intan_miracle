@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS public.services (
     description TEXT NOT NULL,
     duration TEXT,
     icon TEXT,
+    packages JSONB DEFAULT '[]'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

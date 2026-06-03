@@ -37,6 +37,11 @@ export default function Admin() {
   const [resDate, setResDate] = useState('');
   const [resPage, setResPage] = useState(1);
 
+  // Member Filter States
+  const [memBulan, setMemBulan] = useState('all');
+  const [memStatusIbu, setMemStatusIbu] = useState('all');
+  const [memSearch, setMemSearch] = useState('');
+
   // Reset page when filters change
   useEffect(() => {
     setResPage(1);
@@ -875,94 +880,237 @@ export default function Admin() {
           })()}
 
           {/* 2. MEMBER TAB */}
-          {currentTab === 'member' && (
-            <div className="tab-panel active">
-              <div className="admin-card">
-                <div className="card-header">
-                  <h2>Member Terdaftar</h2>
+          {currentTab === 'member' && (() => {
+            const STATUS_IBU_LABEL = {
+              hamil: 'Hamil',
+              pasca_normal: 'Pasca Melahirkan Normal',
+              pasca_caesar: 'Pasca Melahirkan Caesar',
+              menyusui: 'Menyusui',
+              umum: 'Umum',
+            };
+
+            // Build list of available months from members
+            const bulanOptions = [];
+            const seenBulan = new Set();
+            members.forEach(m => {
+              if (m.created_at) {
+                const d = new Date(m.created_at);
+                const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+                if (!seenBulan.has(key)) {
+                  seenBulan.add(key);
+                  bulanOptions.push({ key, label: d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }) });
+                }
+              }
+            });
+            bulanOptions.sort((a, b) => b.key.localeCompare(a.key));
+
+            // Filter members
+            const filteredMembers = members.filter(m => {
+              const matchSearch = !memSearch ||
+                (m.nama_ibu || '').toLowerCase().includes(memSearch.toLowerCase()) ||
+                (m.email || '').toLowerCase().includes(memSearch.toLowerCase()) ||
+                (m.nama_bayi || '').toLowerCase().includes(memSearch.toLowerCase());
+              const matchBulan = memBulan === 'all' || (() => {
+                if (!m.created_at) return false;
+                const d = new Date(m.created_at);
+                const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+                return key === memBulan;
+              })();
+              const matchStatus = memStatusIbu === 'all' || (m.status_ibu || 'umum') === memStatusIbu;
+              return matchSearch && matchBulan && matchStatus;
+            });
+
+            return (
+              <div className="tab-panel active">
+                {/* Filters */}
+                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '20px', alignItems: 'flex-end' }}>
+                  <div style={{ flex: '1', minWidth: '200px' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>🔍 Cari Nama / Email</label>
+                    <input
+                      type="text"
+                      placeholder="Cari nama ibu, bayi, atau email..."
+                      className="form-control"
+                      value={memSearch}
+                      onChange={(e) => setMemSearch(e.target.value)}
+                      style={{ margin: 0, padding: '8px 12px', fontSize: '0.85rem' }}
+                    />
+                  </div>
+                  <div style={{ minWidth: '180px' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>📅 Bulan Bergabung</label>
+                    <select
+                      className="form-control"
+                      value={memBulan}
+                      onChange={(e) => setMemBulan(e.target.value)}
+                      style={{ margin: 0, padding: '8px', fontSize: '0.85rem' }}
+                    >
+                      <option value="all">Semua Bulan</option>
+                      {bulanOptions.map(b => (
+                        <option key={b.key} value={b.key}>{b.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div style={{ minWidth: '200px' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>🌸 Status Ibu</label>
+                    <select
+                      className="form-control"
+                      value={memStatusIbu}
+                      onChange={(e) => setMemStatusIbu(e.target.value)}
+                      style={{ margin: 0, padding: '8px', fontSize: '0.85rem' }}
+                    >
+                      <option value="all">Semua Status</option>
+                      <option value="hamil">Hamil</option>
+                      <option value="pasca_normal">Pasca Melahirkan Normal</option>
+                      <option value="pasca_caesar">Pasca Melahirkan Caesar</option>
+                      <option value="menyusui">Menyusui</option>
+                      <option value="umum">Umum</option>
+                    </select>
+                  </div>
+                  {(memSearch || memBulan !== 'all' || memStatusIbu !== 'all') && (
+                    <button
+                      onClick={() => { setMemSearch(''); setMemBulan('all'); setMemStatusIbu('all'); }}
+                      className="btn btn-secondary"
+                      style={{ padding: '8px 14px', fontSize: '0.8rem', height: '38px', alignSelf: 'flex-end' }}
+                    >
+                      ↺ Reset
+                    </button>
+                  )}
                 </div>
-                <div className="table-responsive">
-                  <table className="admin-table">
-                    <thead>
-                      <tr>
-                        <th>ID Member</th>
-                        <th>Nama Ibu</th>
-                        <th>Data Si Kecil</th>
-                        <th>WhatsApp</th>
-                        <th>Alamat Rumah</th>
-                        <th>Status</th>
-                        <th>Verifikasi</th>
-                        <th>Aksi</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {members.length === 0 ? (
+
+                <div className="admin-card">
+                  <div className="card-header">
+                    <h2>Member Terdaftar ({filteredMembers.length}{filteredMembers.length !== members.length ? ` dari ${members.length}` : ''})</h2>
+                  </div>
+                  <div className="table-responsive">
+                    <table className="admin-table">
+                      <thead>
                         <tr>
-                          <td colSpan="8" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '30px' }}>Belum ada member terdaftar.</td>
+                          <th>ID Member</th>
+                          <th>Nama Ibu</th>
+                          <th>Data Bayi</th>
+                          <th>Berat & Catatan</th>
+                          <th>Status Ibu</th>
+                          <th>WhatsApp</th>
+                          <th>Alamat</th>
+                          <th>Bergabung</th>
+                          <th>Status</th>
+                          <th>Verifikasi</th>
+                          <th>Aksi</th>
                         </tr>
-                      ) : (
-                        members.map((mem) => (
-                          <tr key={mem.id}>
-                            <td><strong>{mem.member_number ? `IM-${mem.member_number}` : '-'}</strong></td>
-                            <td>
-                              <strong>{mem.nama_ibu || 'Member Baru'}</strong><br />
-                              <small style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>✉️ {mem.email || '-'}</small>
-                            </td>
-                            <td>
-                              {mem.nama_bayi || '-'} <small style={{ color: 'var(--text-muted)' }}>({mem.usia_bayi || '-'})</small><br />
-                              <small style={{ color: 'var(--text-muted)', fontWeight: 500 }}>🚻 {mem.jenis_kelamin_bayi || '-'}</small>
-                            </td>
-                            <td>
-                              {mem.whatsapp ? (
-                                <a href={`https://wa.me/${mem.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--pink-600)', fontWeight: 600, textDecoration: 'none' }}>
-                                  💬 {mem.whatsapp}
-                                </a>
-                              ) : '-'}
-                            </td>
-                            <td><small style={{ display: 'block', maxWidth: '180px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={mem.alamat}>{mem.alamat || '-'}</small></td>
-                            <td>
-                              <span className={`status-badge`} style={{
-                                background: mem.status === 'verified' ? '#dcfce7' : mem.status === 'rejected' ? '#fee2e2' : '#fef3c7',
-                                color: mem.status === 'verified' ? '#15803d' : mem.status === 'rejected' ? '#b91c1c' : '#b45309',
-                                fontWeight: 700,
-                                textTransform: 'uppercase',
-                                fontSize: '0.75rem',
-                                padding: '4px 8px',
-                                borderRadius: '4px',
-                              }}>
-                                {mem.status || 'pending'}
-                              </span>
-                            </td>
-                            <td>
-                              <div style={{ display: 'flex', gap: '6px' }}>
-                                <button 
-                                  onClick={() => handleMemberStatusChange(mem.id, 'verified')} 
-                                  className="btn btn-secondary btn-small"
-                                  style={{ background: '#22c55e', color: 'white', border: 'none', padding: '4px 10px', fontSize: '0.75rem' }}
-                                >
-                                  ✔️ Setujui
-                                </button>
-                                <button 
-                                  onClick={() => handleMemberStatusChange(mem.id, 'rejected')} 
-                                  className="btn btn-secondary btn-small"
-                                  style={{ background: '#ef4444', color: 'white', border: 'none', padding: '4px 10px', fontSize: '0.75rem' }}
-                                >
-                                  ❌ Tolak
-                                </button>
-                              </div>
-                            </td>
-                            <td>
-                              <button onClick={() => handleDeleteItem('members', mem.id)} className="btn btn-secondary btn-small btn-danger" style={{ padding: '4px 10px', fontSize: '0.75rem' }}>🗑️ Hapus</button>
+                      </thead>
+                      <tbody>
+                        {filteredMembers.length === 0 ? (
+                          <tr>
+                            <td colSpan="11" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '30px' }}>
+                              {members.length === 0 ? 'Belum ada member terdaftar.' : 'Tidak ada member yang cocok dengan filter.'}
                             </td>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+                        ) : (
+                          filteredMembers.map((mem) => {
+                            const babyAge = (() => {
+                              if (!mem.tanggal_lahir_bayi) return mem.usia_bayi || '-';
+                              const birth = new Date(mem.tanggal_lahir_bayi);
+                              const now = new Date();
+                              const totalDays = Math.floor((now - birth) / (1000*60*60*24));
+                              if (totalDays < 0) return '-';
+                              const years = Math.floor(totalDays / 365);
+                              const months = Math.floor((totalDays % 365) / 30);
+                              if (years === 0 && months === 0) return `${totalDays % 30} hari`;
+                              if (years === 0) return `${months} bln`;
+                              return `${years} thn ${months} bln`;
+                            })();
+
+                            const joinDate = mem.created_at
+                              ? new Date(mem.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+                              : '-';
+
+                            return (
+                              <tr key={mem.id}>
+                                <td><strong style={{ fontSize: '0.8rem' }}>{mem.member_number ? `IM-${mem.member_number}` : '-'}</strong></td>
+                                <td>
+                                  <strong style={{ fontSize: '0.85rem' }}>{mem.nama_ibu || 'Member Baru'}</strong><br />
+                                  <small style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>✉️ {mem.email || '-'}</small>
+                                </td>
+                                <td>
+                                  <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>{mem.nama_bayi || '-'}</span><br />
+                                  <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>⏱️ {babyAge} · 🚻 {mem.jenis_kelamin_bayi || '-'}</small>
+                                </td>
+                                <td>
+                                  <small style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', display: 'block' }}>
+                                    ⚖️ {mem.berat_badan_bayi ? `${mem.berat_badan_bayi} kg` : '-'}
+                                  </small>
+                                  {mem.catatan_medis && (
+                                    <small style={{ color: '#b45309', fontSize: '0.75rem', display: 'block', maxWidth: '130px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={mem.catatan_medis}>
+                                      🏥 {mem.catatan_medis}
+                                    </small>
+                                  )}
+                                </td>
+                                <td>
+                                  <small style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                    {STATUS_IBU_LABEL[mem.status_ibu] || mem.status_ibu || '-'}
+                                    {mem.status_ibu === 'hamil' && mem.usia_kandungan ? ` (${mem.usia_kandungan} mgg)` : ''}
+                                  </small>
+                                </td>
+                                <td>
+                                  {mem.whatsapp ? (
+                                    <a href={`https://wa.me/${mem.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--pink-600)', fontWeight: 600, textDecoration: 'none', fontSize: '0.82rem' }}>
+                                      💬 {mem.whatsapp}
+                                    </a>
+                                  ) : '-'}
+                                </td>
+                                <td>
+                                  <small style={{ display: 'block', maxWidth: '160px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '0.8rem' }} title={`${mem.alamat || ''}${mem.kode_pos ? ' ' + mem.kode_pos : ''}`}>
+                                    {mem.alamat || '-'}{mem.kode_pos ? ` (${mem.kode_pos})` : ''}
+                                  </small>
+                                </td>
+                                <td>
+                                  <small style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>📅 {joinDate}</small>
+                                </td>
+                                <td>
+                                  <span style={{
+                                    background: mem.status === 'verified' ? '#dcfce7' : mem.status === 'rejected' ? '#fee2e2' : '#fef3c7',
+                                    color: mem.status === 'verified' ? '#15803d' : mem.status === 'rejected' ? '#b91c1c' : '#b45309',
+                                    fontWeight: 700,
+                                    textTransform: 'uppercase',
+                                    fontSize: '0.7rem',
+                                    padding: '3px 7px',
+                                    borderRadius: '4px',
+                                    display: 'inline-block',
+                                  }}>
+                                    {mem.status || 'pending'}
+                                  </span>
+                                </td>
+                                <td>
+                                  <div style={{ display: 'flex', gap: '4px', flexDirection: 'column' }}>
+                                    <button
+                                      onClick={() => handleMemberStatusChange(mem.id, 'verified')}
+                                      className="btn btn-secondary btn-small"
+                                      style={{ background: '#22c55e', color: 'white', border: 'none', padding: '3px 8px', fontSize: '0.72rem' }}
+                                    >
+                                      ✔️ Setujui
+                                    </button>
+                                    <button
+                                      onClick={() => handleMemberStatusChange(mem.id, 'rejected')}
+                                      className="btn btn-secondary btn-small"
+                                      style={{ background: '#ef4444', color: 'white', border: 'none', padding: '3px 8px', fontSize: '0.72rem' }}
+                                    >
+                                      ❌ Tolak
+                                    </button>
+                                  </div>
+                                </td>
+                                <td>
+                                  <button onClick={() => handleDeleteItem('members', mem.id)} className="btn btn-secondary btn-small btn-danger" style={{ padding: '3px 8px', fontSize: '0.72rem' }}>🗑️ Hapus</button>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* 3. ARTIKEL TAB */}
           {currentTab === 'artikel' && (
@@ -1253,37 +1401,99 @@ export default function Admin() {
           )}
 
           {/* 11. POSTER & QR CODE TAB */}
-          {currentTab === 'qrcode' && (
-            <div className="tab-panel active" style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-              <div className="admin-card" style={{ padding: '40px 32px', textAlign: 'center', maxWidth: '540px', width: '100%' }}>
-                <div style={{ fontSize: '3.5rem', marginBottom: '16px' }}>✨</div>
-                <h2>QR Code Akses Cepat</h2>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '24px', lineHeight: 1.6 }}>
-                  Cukup gunakan <strong>satu QR Code</strong> ini untuk ditempatkan pada banner, brosur, atau media promosi Anda. 
-                  Saat di-scan, pelanggan akan diarahkan ke halaman khusus untuk memilih langsung apakah ingin melakukan <strong>Reservasi Layanan</strong> atau masuk ke <strong>Member Area</strong>.
-                </p>
-                <div style={{ background: '#fdf2f8', padding: '24px', borderRadius: 'var(--radius-xl)', display: 'inline-block', border: '2px solid var(--pink-200)', marginBottom: '24px' }}>
-                  <img 
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&color=db2777&data=${encodeURIComponent(window.location.origin + window.location.pathname + '#/akses')}`}
-                    alt="QR Code Akses Cepat"
-                    style={{ width: '220px', height: '220px', display: 'block' }}
-                  />
-                </div>
-                <div>
-                  <button 
-                    onClick={() => {
-                      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&color=db2777&data=${encodeURIComponent(window.location.origin + window.location.pathname + '#/akses')}`;
-                      window.open(qrUrl, '_blank');
-                    }}
-                    className="btn btn-primary"
-                    style={{ padding: '12px 24px', fontSize: '0.9rem', width: '100%', justifyContent: 'center' }}
-                  >
-                    📥 Unduh QR Code Akses Cepat (HD)
-                  </button>
+          {currentTab === 'qrcode' && (() => {
+            const path = window.location.pathname;
+            const adminIndex = path.indexOf('/admin');
+            const basePath = adminIndex !== -1 ? path.substring(0, adminIndex) : '';
+            const aksesUrl = window.location.origin + basePath + '/akses';
+            const reservasiUrl = window.location.origin + basePath + '/reservasi';
+            const memberUrl = window.location.origin + basePath + '/member';
+
+            return (
+              <div className="tab-panel active" style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                <div style={{ maxWidth: '700px', width: '100%', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  {/* Main QR — Akses Cepat */}
+                  <div className="admin-card" style={{ padding: '40px 32px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '3rem', marginBottom: '12px' }}>✨</div>
+                    <h2 style={{ marginBottom: '8px' }}>QR Code Akses Cepat</h2>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '24px', lineHeight: 1.6 }}>
+                      Gunakan <strong>satu QR Code</strong> ini untuk banner, brosur, atau media promosi Anda.
+                      Saat di-scan, pelanggan akan diarahkan ke halaman untuk memilih <strong>Reservasi Layanan</strong> atau <strong>Member Area</strong>.
+                    </p>
+                    <div style={{ background: '#fdf2f8', padding: '24px', borderRadius: 'var(--radius-xl)', display: 'inline-block', border: '2px solid var(--pink-200)', marginBottom: '20px' }}>
+                      <img
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&color=db2777&data=${encodeURIComponent(aksesUrl)}`}
+                        alt="QR Code Akses Cepat"
+                        style={{ width: '220px', height: '220px', display: 'block' }}
+                      />
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '20px', wordBreak: 'break-all' }}>
+                      🔗 {aksesUrl}
+                    </div>
+                    <button
+                      onClick={() => {
+                        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=800x800&color=db2777&data=${encodeURIComponent(aksesUrl)}`;
+                        window.open(qrUrl, '_blank');
+                      }}
+                      className="btn btn-primary"
+                      style={{ padding: '12px 24px', fontSize: '0.9rem', justifyContent: 'center' }}
+                    >
+                      📥 Unduh QR Akses Cepat (HD)
+                    </button>
+                  </div>
+
+                  {/* Split QR Codes */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                    {/* Reservasi QR */}
+                    <div className="admin-card" style={{ padding: '28px 20px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📅</div>
+                      <h3 style={{ fontSize: '1rem', marginBottom: '6px' }}>QR Reservasi Langsung</h3>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '16px', lineHeight: 1.5 }}>Langsung ke form reservasi</p>
+                      <div style={{ background: '#fdf2f8', padding: '16px', borderRadius: '16px', display: 'inline-block', border: '1px solid var(--pink-200)', marginBottom: '16px' }}>
+                        <img
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&color=db2777&data=${encodeURIComponent(reservasiUrl)}`}
+                          alt="QR Reservasi"
+                          style={{ width: '160px', height: '160px', display: 'block' }}
+                        />
+                      </div>
+                      <div>
+                        <button
+                          onClick={() => window.open(`https://api.qrserver.com/v1/create-qr-code/?size=600x600&color=db2777&data=${encodeURIComponent(reservasiUrl)}`, '_blank')}
+                          className="btn btn-secondary"
+                          style={{ padding: '8px 16px', fontSize: '0.8rem', justifyContent: 'center' }}
+                        >
+                          📥 Unduh
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Member QR */}
+                    <div className="admin-card" style={{ padding: '28px 20px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '2rem', marginBottom: '8px' }}>💎</div>
+                      <h3 style={{ fontSize: '1rem', marginBottom: '6px' }}>QR Member Area</h3>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '16px', lineHeight: 1.5 }}>Langsung ke halaman member</p>
+                      <div style={{ background: '#fdf2f8', padding: '16px', borderRadius: '16px', display: 'inline-block', border: '1px solid var(--pink-200)', marginBottom: '16px' }}>
+                        <img
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&color=db2777&data=${encodeURIComponent(memberUrl)}`}
+                          alt="QR Member"
+                          style={{ width: '160px', height: '160px', display: 'block' }}
+                        />
+                      </div>
+                      <div>
+                        <button
+                          onClick={() => window.open(`https://api.qrserver.com/v1/create-qr-code/?size=600x600&color=db2777&data=${encodeURIComponent(memberUrl)}`, '_blank')}
+                          className="btn btn-secondary"
+                          style={{ padding: '8px 16px', fontSize: '0.8rem', justifyContent: 'center' }}
+                        >
+                          📥 Unduh
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
 
         </div>
@@ -1447,6 +1657,78 @@ export default function Admin() {
                       <label>Icon Emoji</label>
                       <input type="text" className="form-control" placeholder="Contoh: 👶" value={formFields.icon || ''} onChange={(e) => updateField('icon', e.target.value)} required />
                     </div>
+
+                    {/* Packages Management */}
+                    {(() => {
+                      // Parse packages from JSON string or array
+                      let pkgs = [];
+                      try {
+                        const raw = formFields.packages;
+                        if (Array.isArray(raw)) pkgs = raw;
+                        else if (typeof raw === 'string' && raw.trim()) pkgs = JSON.parse(raw);
+                      } catch (_) { pkgs = []; }
+
+                      const updatePkgs = (newPkgs) => updateField('packages', JSON.stringify(newPkgs));
+
+                      return (
+                        <div style={{ background: 'var(--pink-50)', padding: '16px', borderRadius: '12px', border: '1px solid var(--pink-100)', marginBottom: '8px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--pink-700)' }}>
+                              📦 Paket Harga (Opsional)
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => updatePkgs([...pkgs, { label: '', price: 0 }])}
+                              className="btn btn-secondary"
+                              style={{ padding: '4px 12px', fontSize: '0.78rem' }}
+                            >
+                              + Tambah Paket
+                            </button>
+                          </div>
+                          {pkgs.length === 0 && (
+                            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0 }}>
+                              Kosong — gunakan jika layanan ini memiliki beberapa pilihan paket (contoh: Paket 3 Hari, Paket 5 Hari, dll.)
+                            </p>
+                          )}
+                          {pkgs.map((pkg, idx) => (
+                            <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 120px 28px', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
+                              <input
+                                type="text"
+                                className="form-control"
+                                placeholder="Nama Paket (contoh: Paket 3 Hari)"
+                                value={pkg.label}
+                                onChange={(e) => {
+                                  const updated = [...pkgs];
+                                  updated[idx] = { ...updated[idx], label: e.target.value };
+                                  updatePkgs(updated);
+                                }}
+                                style={{ fontSize: '0.82rem', padding: '6px 8px', margin: 0 }}
+                              />
+                              <input
+                                type="number"
+                                className="form-control"
+                                placeholder="Harga (IDR)"
+                                value={pkg.price}
+                                onChange={(e) => {
+                                  const updated = [...pkgs];
+                                  updated[idx] = { ...updated[idx], price: parseFloat(e.target.value) || 0 };
+                                  updatePkgs(updated);
+                                }}
+                                style={{ fontSize: '0.82rem', padding: '6px 8px', margin: 0 }}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => updatePkgs(pkgs.filter((_, i) => i !== idx))}
+                                style={{ background: '#fee2e2', color: '#b91c1c', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 700, fontSize: '1rem', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                title="Hapus paket ini"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </>
                 )}
 

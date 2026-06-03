@@ -218,68 +218,74 @@ export default function Layanan() {
               </div>
             ))}
 
-            {/* Perawatan Bayi Baru Lahir (Homecare) - Statically Hardcoded to match HTML */}
-            <div className="homecare-container animate-on-scroll">
-              <div className="homecare-header">
-                <div className="service-detail-icon">👶</div>
-                <div className="homecare-title-info">
-                  <h3>Perawatan Bayi Baru Lahir (Homecare)</h3>
-                  <p>Layanan kunjungan ke rumah untuk perawatan bayi baru lahir, meliputi: Perawatan tali pusat, Memandikan bayi, Baby massage, Jemur bayi newborn, Potong kuku bayi, Cukur bayi.</p>
+            {/* Render any baby services from DB that have packages (homecare-grid style) */}
+            {babyServices.filter(srv => {
+              try {
+                const pkgs = Array.isArray(srv.packages)
+                  ? srv.packages
+                  : (typeof srv.packages === 'string' && srv.packages.trim() ? JSON.parse(srv.packages) : []);
+                return pkgs.length > 0;
+              } catch (_) { return false; }
+            }).map((srv, i) => {
+              let pkgs = [];
+              try {
+                pkgs = Array.isArray(srv.packages) ? srv.packages : JSON.parse(srv.packages);
+              } catch (_) {}
+              return (
+                <div className="homecare-container animate-on-scroll" key={`pkg-${i}`}>
+                  <div className="homecare-header">
+                    <div className="service-detail-icon">{srv.icon || '👶'}</div>
+                    <div className="homecare-title-info">
+                      <h3>{srv.name}</h3>
+                      <p>{srv.description}</p>
+                    </div>
+                  </div>
+                  <div className="homecare-grid">
+                    {pkgs.map((pkg, pi) => (
+                      <div className="homecare-item" key={pi}>
+                        <div className="homecare-icon">🏠</div>
+                        <div className="homecare-info">
+                          <span className="homecare-days">{pkg.label}</span>
+                          <span className="homecare-price">{formatPrice(pkg.price)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              );
+            })}
 
-              <div className="homecare-grid">
-                <div className="homecare-item">
-                  <div className="homecare-icon">🏠</div>
-                  <div className="homecare-info">
-                    <span className="homecare-days">Paket 3 Hari</span>
-                    <span className="homecare-price">Rp350.000</span>
+            {/* Perawatan Bayi Baru Lahir — shown only when using fallback (no DB data) */}
+            {babyServices.length === 0 && (
+              <div className="homecare-container animate-on-scroll">
+                <div className="homecare-header">
+                  <div className="service-detail-icon">👶</div>
+                  <div className="homecare-title-info">
+                    <h3>Perawatan Bayi Baru Lahir (Homecare)</h3>
+                    <p>Layanan kunjungan ke rumah untuk perawatan bayi baru lahir, meliputi: Perawatan tali pusat, Memandikan bayi, Baby massage, Jemur bayi newborn, Potong kuku bayi, Cukur bayi.</p>
                   </div>
                 </div>
-                <div className="homecare-item">
-                  <div className="homecare-icon">🏠</div>
-                  <div className="homecare-info">
-                    <span className="homecare-days">Paket 5 Hari</span>
-                    <span className="homecare-price">Rp605.000</span>
-                  </div>
-                </div>
-                <div className="homecare-item">
-                  <div className="homecare-icon">🏠</div>
-                  <div className="homecare-info">
-                    <span className="homecare-days">Paket 7 Hari</span>
-                    <span className="homecare-price">Rp825.000</span>
-                  </div>
-                </div>
-                <div className="homecare-item">
-                  <div className="homecare-icon">🏠</div>
-                  <div className="homecare-info">
-                    <span className="homecare-days">Paket 10 Hari</span>
-                    <span className="homecare-price">Rp1.145.000</span>
-                  </div>
-                </div>
-                <div className="homecare-item">
-                  <div className="homecare-icon">🏠</div>
-                  <div className="homecare-info">
-                    <span className="homecare-days">Paket 15 Hari</span>
-                    <span className="homecare-price">Rp1.655.000</span>
-                  </div>
-                </div>
-                <div className="homecare-item">
-                  <div className="homecare-icon">🏠</div>
-                  <div className="homecare-info">
-                    <span className="homecare-days">Paket 20 Hari</span>
-                    <span className="homecare-price">Rp2.260.000</span>
-                  </div>
-                </div>
-                <div className="homecare-item">
-                  <div className="homecare-icon">🏠</div>
-                  <div className="homecare-info">
-                    <span className="homecare-days">Paket 30 Hari</span>
-                    <span className="homecare-price">Rp3.255.000</span>
-                  </div>
+                <div className="homecare-grid">
+                  {[
+                    { label: 'Paket 3 Hari', price: 350000 },
+                    { label: 'Paket 5 Hari', price: 605000 },
+                    { label: 'Paket 7 Hari', price: 825000 },
+                    { label: 'Paket 10 Hari', price: 1145000 },
+                    { label: 'Paket 15 Hari', price: 1655000 },
+                    { label: 'Paket 20 Hari', price: 2260000 },
+                    { label: 'Paket 30 Hari', price: 3255000 },
+                  ].map((pkg, i) => (
+                    <div className="homecare-item" key={i}>
+                      <div className="homecare-icon">🏠</div>
+                      <div className="homecare-info">
+                        <span className="homecare-days">{pkg.label}</span>
+                        <span className="homecare-price">{formatPrice(pkg.price)}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </section>

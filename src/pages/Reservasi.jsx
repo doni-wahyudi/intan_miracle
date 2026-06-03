@@ -93,14 +93,14 @@ export default function Reservasi() {
       }
     }
     fetchBookedSlots();
-  }, [tanggal, jam]);
+  }, [tanggal]);
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setSubmitStatus('⌛ Memproses Reservasi...');
 
-    // Re-verify slot availability to prevent race conditions (max 1 per slot)
+    // Re-verify slot availability to prevent race conditions (max 1 per slot overall)
     try {
       const { data: existing, error: checkError } = await supabase
         .from('reservations')
