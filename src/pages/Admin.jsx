@@ -328,12 +328,39 @@ export default function Admin() {
 
     const dataPayload = { ...formFields };
     
-    // Differentiate price management based on baby vs non-baby categories
+    // Differentiate price management based on baby vs non-baby categories and packages
     if (currentTab === 'layanan') {
-      if (dataPayload.category === 'baby') {
+      const selectedTipe = dataPayload.tipe_harga || 'flat';
+      delete dataPayload.tipe_harga; // Remove UI helper state column
+
+      // Normalize packages
+      let finalPkgs = [];
+      try {
+        const raw = dataPayload.packages;
+        if (Array.isArray(raw)) finalPkgs = raw;
+        else if (typeof raw === 'string' && raw.trim()) finalPkgs = JSON.parse(raw);
+      } catch (_) { finalPkgs = []; }
+
+      if (selectedTipe === 'package') {
+        // Keep packages, reset all others to 0 (since price is NOT NULL in DB, keep it as 0)
+        dataPayload.packages = finalPkgs;
         dataPayload.price = 0;
         dataPayload.price_clinic = 0;
+        dataPayload.price_age_0_1 = 0;
+        dataPayload.price_age_1_2 = 0;
+        dataPayload.price_age_2_plus = 0;
+        dataPayload.price_clinic_age_0_1 = 0;
+        dataPayload.price_clinic_age_1_2 = 0;
+        dataPayload.price_clinic_age_2_plus = 0;
+      } else if (selectedTipe === 'age') {
+        // Keep age-based, reset packages and flat prices
+        dataPayload.packages = [];
+        dataPayload.price = 0;
+        dataPayload.price_clinic = 0;
+        // Keep existing age based fields
       } else {
+        // flat price: reset packages and age-based prices
+        dataPayload.packages = [];
         dataPayload.price_age_0_1 = 0;
         dataPayload.price_age_1_2 = 0;
         dataPayload.price_age_2_plus = 0;
@@ -426,6 +453,8 @@ export default function Admin() {
       initial.price_age_0_1 = 0; initial.price_age_1_2 = 0; initial.price_age_2_plus = 0;
       initial.price_clinic_age_0_1 = 0; initial.price_clinic_age_1_2 = 0; initial.price_clinic_age_2_plus = 0;
       initial.description = ''; initial.duration = ''; initial.icon = '🌸';
+      initial.packages = [];
+      initial.tipe_harga = 'flat';
     } else if (currentTab === 'galeri') {
       initial.image_url = ''; initial.caption = '';
     } else if (currentTab === 'testimoni') {
@@ -451,6 +480,33 @@ export default function Admin() {
     const payload = { ...item };
     delete payload.id;
     delete payload.created_at;
+
+    // Ensure packages is parsed as a JS array
+    if (payload.packages) {
+      try {
+        if (typeof payload.packages === 'string') {
+          payload.packages = JSON.parse(payload.packages);
+        } else if (!Array.isArray(payload.packages)) {
+          payload.packages = [];
+        }
+      } catch (_) {
+        payload.packages = [];
+      }
+    } else {
+      payload.packages = [];
+    }
+
+    // Auto-detect pricing type helper state for form UI
+    if (currentTab === 'layanan') {
+      if (payload.packages && payload.packages.length > 0) {
+        payload.tipe_harga = 'package';
+      } else if (payload.price_age_0_1 > 0 || payload.price_age_1_2 > 0 || payload.price_age_2_plus > 0) {
+        payload.tipe_harga = 'age';
+      } else {
+        payload.tipe_harga = 'flat';
+      }
+    }
+
     setFormFields(payload);
     setModalOpen(true);
   };
@@ -643,7 +699,7 @@ export default function Admin() {
           </div>
         </header>
 
-        <div className="admin-content" style={{ padding: '40px' }}>
+        <div className="admin-content">
           {/* 1. RESERVASI TAB */}
           {currentTab === 'reservasi' && (() => {
             const sortedReservations = [...reservations]
@@ -1157,33 +1213,57 @@ export default function Admin() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
                           <span style={{ fontSize: '1.8rem' }}>{srv.icon || '🌸'}</span>
                           <span className="card-tag" style={{ position: 'static', textTransform: 'uppercase' }}>
-                            {srv.category === 'baby' ? 'Bayi' : srv.category === 'mom' ? 'Ibu' : 'Laktasi'}
+                            {srv.category === 'baby' ? 'Bayi' : srv.category === 'newborn' ? 'Bayi Baru Lahir' : srv.category === 'mom' ? 'Ibu' : 'Laktasi'}
                           </span>
                         </div>
                         <h3>{srv.name}</h3>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '12px' }}>
-                          {srv.category === 'baby' ? (
-                            <>
-                              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>🏠 Usia (Homecare):</div>
-                              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', paddingLeft: '10px' }}>• 0-1th: <strong>Rp{parseInt(srv.price_age_0_1).toLocaleString('id-ID')}</strong></div>
-                              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', paddingLeft: '10px' }}>• 1-2th: <strong>Rp{parseInt(srv.price_age_1_2).toLocaleString('id-ID')}</strong></div>
-                              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', paddingLeft: '10px' }}>• &gt;2th: <strong>Rp{parseInt(srv.price_age_2_plus).toLocaleString('id-ID')}</strong></div>
-                              
-                              {srv.price_clinic_age_0_1 > 0 && (
+                          {(() => {
+                            let pkgs = [];
+                            try {
+                              pkgs = Array.isArray(srv.packages) ? srv.packages : (typeof srv.packages === 'string' && srv.packages.trim() ? JSON.parse(srv.packages) : []);
+                            } catch (_) {}
+
+                            if (pkgs.length > 0) {
+                              return (
                                 <>
-                                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600, marginTop: '6px' }}>🏥 Usia (Clinic Care):</div>
-                                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', paddingLeft: '10px' }}>• 0-1th: <strong>Rp{parseInt(srv.price_clinic_age_0_1).toLocaleString('id-ID')}</strong></div>
-                                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', paddingLeft: '10px' }}>• 1-2th: <strong>Rp{parseInt(srv.price_clinic_age_1_2).toLocaleString('id-ID')}</strong></div>
-                                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', paddingLeft: '10px' }}>• &gt;2th: <strong>Rp{parseInt(srv.price_clinic_age_2_plus).toLocaleString('id-ID')}</strong></div>
+                                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>📦 Pilihan Paket:</div>
+                                  {pkgs.map((pkg, idx) => (
+                                    <div key={idx} style={{ fontSize: '0.8rem', color: 'var(--text-muted)', paddingLeft: '10px' }}>
+                                      • {pkg.label}: <strong>Rp{parseInt(pkg.price).toLocaleString('id-ID')}</strong>
+                                    </div>
+                                  ))}
                                 </>
-                              )}
-                            </>
-                          ) : (
-                            <>
-                              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>🏠 Homecare: <strong style={{ color: 'var(--pink-600)' }}>Rp{parseInt(srv.price).toLocaleString('id-ID')}</strong></div>
-                              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>🏥 Clinic: <strong style={{ color: 'var(--pink-600)' }}>{srv.price_clinic ? `Rp${parseInt(srv.price_clinic).toLocaleString('id-ID')}` : 'Rp0'}</strong></div>
-                            </>
-                          )}
+                              );
+                            }
+
+                            if (srv.category === 'baby') {
+                              return (
+                                <>
+                                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>🏠 Usia (Homecare):</div>
+                                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', paddingLeft: '10px' }}>• 0-1th: <strong>Rp{parseInt(srv.price_age_0_1).toLocaleString('id-ID')}</strong></div>
+                                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', paddingLeft: '10px' }}>• 1-2th: <strong>Rp{parseInt(srv.price_age_1_2).toLocaleString('id-ID')}</strong></div>
+                                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', paddingLeft: '10px' }}>• &gt;2th: <strong>Rp{parseInt(srv.price_age_2_plus).toLocaleString('id-ID')}</strong></div>
+                                  
+                                  {srv.price_clinic_age_0_1 > 0 && (
+                                    <>
+                                      <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600, marginTop: '6px' }}>🏥 Usia (Clinic Care):</div>
+                                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', paddingLeft: '10px' }}>• 0-1th: <strong>Rp{parseInt(srv.price_clinic_age_0_1).toLocaleString('id-ID')}</strong></div>
+                                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', paddingLeft: '10px' }}>• 1-2th: <strong>Rp{parseInt(srv.price_clinic_age_1_2).toLocaleString('id-ID')}</strong></div>
+                                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', paddingLeft: '10px' }}>• &gt;2th: <strong>Rp{parseInt(srv.price_clinic_age_2_plus).toLocaleString('id-ID')}</strong></div>
+                                    </>
+                                  )}
+                                </>
+                              );
+                            }
+
+                            return (
+                              <>
+                                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>🏠 Homecare: <strong style={{ color: 'var(--pink-600)' }}>Rp{parseInt(srv.price).toLocaleString('id-ID')}</strong></div>
+                                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>🏥 Clinic: <strong style={{ color: 'var(--pink-600)' }}>{srv.price_clinic ? `Rp${parseInt(srv.price_clinic).toLocaleString('id-ID')}` : 'Rp0'}</strong></div>
+                              </>
+                            );
+                          })()}
                         </div>
                         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{srv.description}</p>
                         <div className="card-meta">⏱️ Durasi: {srv.duration || '-'}</div>
@@ -1590,13 +1670,40 @@ export default function Admin() {
                     </div>
                     <div className="form-group">
                       <label>Kategori</label>
-                      <select className="form-control" value={formFields.category || ''} onChange={(e) => updateField('category', e.target.value)}>
-                        <option value="baby">Bayi</option>
-                        <option value="mom">Ibu</option>
+                      <select 
+                        className="form-control" 
+                        value={formFields.category || ''} 
+                        onChange={(e) => {
+                          const cat = e.target.value;
+                          updateField('category', cat);
+                          if (cat !== 'baby' && formFields.tipe_harga === 'age') {
+                            updateField('tipe_harga', 'flat');
+                          }
+                        }}
+                      >
+                        <option value="baby">Pelayanan Bayi</option>
+                        <option value="newborn">Perawatan Bayi Baru Lahir</option>
+                        <option value="mom">Pelayanan Ibu</option>
                         <option value="lactation">Laktasi (Konselor Laktasi)</option>
                       </select>
                     </div>
-                    {formFields.category === 'baby' && (
+
+                    <div className="form-group">
+                      <label>Jenis Biaya Layanan</label>
+                      <select 
+                        className="form-control" 
+                        value={formFields.tipe_harga || 'flat'} 
+                        onChange={(e) => updateField('tipe_harga', e.target.value)}
+                      >
+                        <option value="flat">Harga Flat (Satu Harga)</option>
+                        {formFields.category === 'baby' && (
+                          <option value="age">Berdasarkan Usia (Tiers)</option>
+                        )}
+                        <option value="package">Berdasarkan Paket (Multi-Paket)</option>
+                      </select>
+                    </div>
+
+                    {formFields.category === 'baby' && formFields.tipe_harga === 'age' && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px', background: 'var(--pink-50)', padding: '16px', borderRadius: '12px', border: '1px solid var(--pink-100)' }}>
                         <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--pink-700)' }}>👶 Atur Harga Berdasarkan Usia (Homecare & Clinic Care)</div>
                         
@@ -1633,7 +1740,7 @@ export default function Admin() {
                         </div>
                       </div>
                     )}
-                    {formFields.category !== 'baby' && (
+                    {formFields.tipe_harga === 'flat' && (
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                         <div className="form-group">
                           <label>Harga Homecare (IDR)</label>
@@ -1659,22 +1766,15 @@ export default function Admin() {
                     </div>
 
                     {/* Packages Management */}
-                    {(() => {
-                      // Parse packages from JSON string or array
-                      let pkgs = [];
-                      try {
-                        const raw = formFields.packages;
-                        if (Array.isArray(raw)) pkgs = raw;
-                        else if (typeof raw === 'string' && raw.trim()) pkgs = JSON.parse(raw);
-                      } catch (_) { pkgs = []; }
-
-                      const updatePkgs = (newPkgs) => updateField('packages', JSON.stringify(newPkgs));
+                    {formFields.tipe_harga === 'package' && (() => {
+                      const pkgs = Array.isArray(formFields.packages) ? formFields.packages : [];
+                      const updatePkgs = (newPkgs) => updateField('packages', newPkgs);
 
                       return (
                         <div style={{ background: 'var(--pink-50)', padding: '16px', borderRadius: '12px', border: '1px solid var(--pink-100)', marginBottom: '8px' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                             <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--pink-700)' }}>
-                              📦 Paket Harga (Opsional)
+                              📦 Paket Harga
                             </div>
                             <button
                               type="button"
@@ -1703,6 +1803,7 @@ export default function Admin() {
                                   updatePkgs(updated);
                                 }}
                                 style={{ fontSize: '0.82rem', padding: '6px 8px', margin: 0 }}
+                                required
                               />
                               <input
                                 type="number"
@@ -1715,6 +1816,7 @@ export default function Admin() {
                                   updatePkgs(updated);
                                 }}
                                 style={{ fontSize: '0.82rem', padding: '6px 8px', margin: 0 }}
+                                required
                               />
                               <button
                                 type="button"

@@ -228,6 +228,28 @@ export default function ArtikelDetail() {
     // Temporarily scroll to top to prevent html2canvas blank page scrolling bug!
     window.scrollTo(0, 0);
 
+    // Get all animate-on-scroll elements inside target + target itself
+    const animElements = Array.from(target.querySelectorAll('.animate-on-scroll'));
+    if (target.classList.contains('animate-on-scroll')) {
+      animElements.push(target);
+    }
+
+    // Save original styles and force visibility
+    const savedStyles = animElements.map(el => ({
+      element: el,
+      opacity: el.style.opacity,
+      transform: el.style.transform,
+      transition: el.style.transition,
+      classList: Array.from(el.classList)
+    }));
+
+    animElements.forEach(el => {
+      el.style.setProperty('opacity', '1', 'important');
+      el.style.setProperty('transform', 'none', 'important');
+      el.style.setProperty('transition', 'none', 'important');
+      el.classList.add('visible');
+    });
+
     // Hide PDF button
     const btn = document.querySelector('.btn-download-pdf');
     if (btn) btn.style.display = 'none';
@@ -246,8 +268,9 @@ export default function ArtikelDetail() {
 
     // Inject Logo Overlay
     const articleImageDiv = target.querySelector('.featured-article-image');
+    let logoOverlay = null;
     if (articleImageDiv) {
-      const logoOverlay = document.createElement('img');
+      logoOverlay = document.createElement('img');
       logoOverlay.id = 'pdf-logo-overlay';
       logoOverlay.src = img('/Image/LOGO INTAN MIRACLE colour italic.webp');
       logoOverlay.style.cssText = 'position: absolute; top: 12px; left: 12px; height: 40px; background: rgba(255,255,255,0.85); padding: 6px 10px; border-radius: 8px; z-index: 5;';
@@ -292,10 +315,17 @@ export default function ArtikelDetail() {
     function cleanup() {
       const header = document.getElementById('pdf-logo-header');
       if (header) header.remove();
-      const overlay = document.getElementById('pdf-logo-overlay');
-      if (overlay) overlay.remove();
+      if (logoOverlay) logoOverlay.remove();
       const footer = document.getElementById('pdf-footer');
       if (footer) footer.remove();
+
+      // Restore original styles and classes
+      savedStyles.forEach(s => {
+        s.element.style.opacity = s.opacity;
+        s.element.style.transform = s.transform;
+        s.element.style.transition = s.transition;
+        s.element.className = s.classList.join(' ');
+      });
 
       if (btn) btn.style.display = '';
       setPdfLoading(false);

@@ -24,13 +24,38 @@ export default function Reservasi() {
   const [alamat, setAlamat] = useState('');
   const [catatan, setCatatan] = useState('');
   const [bookedSlots, setBookedSlots] = useState([]);
+  const [dbServices, setDbServices] = useState([]);
+
+  // Fetch Services from Supabase
+  useEffect(() => {
+    async function fetchServices() {
+      try {
+        const { data, error } = await supabase
+          .from('services')
+          .select('name, category')
+          .order('name', { ascending: true });
+        if (!error && data) {
+          setDbServices(data);
+        }
+      } catch (err) {
+        console.error('Error fetching services:', err);
+      }
+    }
+    fetchServices();
+  }, []);
 
   // UI state
   const [submitStatus, setSubmitStatus] = useState('📩 Kirim Reservasi');
   const [loading, setLoading] = useState(false);
 
   // Run scroll animations
-  useScrollAnimation([tipeLayanan]);
+  useScrollAnimation([tipeLayanan, dbServices]);
+
+  // Group services
+  const babyServices = dbServices.filter(s => s.category === 'baby');
+  const newbornServices = dbServices.filter(s => s.category === 'newborn');
+  const momServices = dbServices.filter(s => s.category === 'mom');
+  const lactationServices = dbServices.filter(s => s.category === 'lactation');
 
   // Prefill Member Info
   useEffect(() => {
@@ -345,27 +370,66 @@ Terima kasih! ✨`;
                       required
                     >
                       <option value="" disabled>— Pilih layanan —</option>
-                      <optgroup label="👶 Pelayanan Bayi">
-                        <option value="Baby Massage">Baby Massage</option>
-                        <option value="Baby Gym">Baby Gym</option>
-                        <option value="Baby Swim">Baby Swim</option>
-                        <option value="Baby Spa">Baby Spa (Massage + Gym + Swim)</option>
-                        <option value="Baby Therapy Massage">Baby Therapy Massage</option>
-                        <option value="Cukur Bayi">Cukur Bayi</option>
-                        <option value="Tindik Bayi">Tindik Bayi</option>
-                        <option value="Perawatan Bayi Baru Lahir (Homecare)">Perawatan Bayi Baru Lahir (Homecare)</option>
-                      </optgroup>
-                      <optgroup label="🤍 Pelayanan Ibu">
-                        <option value="Pijat Ibu Hamil">Pijat Ibu Hamil</option>
-                        <option value="Pijat Ibu Nifas">Pijat Ibu Nifas</option>
-                        <option value="Bengkung">Bengkung</option>
-                      </optgroup>
-                      <optgroup label="🤱 Konselor Laktasi">
-                        <option value="Konsultasi Menyusui">Konsultasi Menyusui</option>
-                        <option value="Pijat Laktasi">Pijat Laktasi</option>
-                        <option value="Paket Lengkap Laktasi">Paket Lengkap</option>
-                        <option value="Paket Lengkap Laktasi (Homecare)">Paket Lengkap (Homecare)</option>
-                      </optgroup>
+                      
+                      {dbServices.length > 0 ? (
+                        <>
+                          {babyServices.length > 0 && (
+                            <optgroup label="👶 Pelayanan Bayi">
+                              {babyServices.map((s, idx) => (
+                                <option key={idx} value={s.name}>{s.name}</option>
+                              ))}
+                            </optgroup>
+                          )}
+                          {newbornServices.length > 0 && (
+                            <optgroup label="🍼 Perawatan Bayi Baru Lahir">
+                              {newbornServices.map((s, idx) => (
+                                <option key={idx} value={s.name}>{s.name}</option>
+                              ))}
+                            </optgroup>
+                          )}
+                          {momServices.length > 0 && (
+                            <optgroup label="🤍 Pelayanan Ibu">
+                              {momServices.map((s, idx) => (
+                                <option key={idx} value={s.name}>{s.name}</option>
+                              ))}
+                            </optgroup>
+                          )}
+                          {lactationServices.length > 0 && (
+                            <optgroup label="🤱 Konselor Laktasi">
+                              {lactationServices.map((s, idx) => (
+                                <option key={idx} value={s.name}>{s.name}</option>
+                              ))}
+                            </optgroup>
+                          )}
+                        </>
+                      ) : (
+                        // Fallback static list
+                        <>
+                          <optgroup label="👶 Pelayanan Bayi">
+                            <option value="Baby Massage">Baby Massage</option>
+                            <option value="Baby Gym">Baby Gym</option>
+                            <option value="Baby Swim">Baby Swim</option>
+                            <option value="Baby Spa">Baby Spa (Massage + Gym + Swim)</option>
+                            <option value="Baby Therapy Massage">Baby Therapy Massage</option>
+                            <option value="Cukur Bayi">Cukur Bayi</option>
+                            <option value="Tindik Bayi">Tindik Bayi</option>
+                          </optgroup>
+                          <optgroup label="🍼 Perawatan Bayi Baru Lahir">
+                            <option value="Perawatan Bayi Baru Lahir (Homecare)">Perawatan Bayi Baru Lahir (Homecare)</option>
+                          </optgroup>
+                          <optgroup label="🤍 Pelayanan Ibu">
+                            <option value="Pijat Ibu Hamil">Pijat Ibu Hamil</option>
+                            <option value="Pijat Ibu Nifas">Pijat Ibu Nifas</option>
+                            <option value="Bengkung">Bengkung</option>
+                          </optgroup>
+                          <optgroup label="🤱 Konselor Laktasi">
+                            <option value="Konsultasi Menyusui">Konsultasi Menyusui</option>
+                            <option value="Pijat Laktasi">Pijat Laktasi</option>
+                            <option value="Paket Lengkap Laktasi">Paket Lengkap</option>
+                            <option value="Paket Lengkap Laktasi (Homecare)">Paket Lengkap (Homecare)</option>
+                          </optgroup>
+                        </>
+                      )}
                     </select>
                   </div>
                 </div>

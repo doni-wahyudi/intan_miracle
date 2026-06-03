@@ -147,13 +147,55 @@ export default function Layanan() {
   };
 
   // Determine active lists
-  const babyServices = dbServices.filter(s => s.category === 'baby');
+  const babyServicesAll = dbServices.filter(s => s.category === 'baby');
+  
+  // Only include baby services without packages in age-based services list
+  const babyServices = babyServicesAll.filter(srv => {
+    try {
+      const pkgs = Array.isArray(srv.packages)
+        ? srv.packages
+        : (typeof srv.packages === 'string' && srv.packages.trim() ? JSON.parse(srv.packages) : []);
+      return pkgs.length === 0;
+    } catch (_) { return true; }
+  });
+
+  // Baby services that have packages
+  const babyServicesPackages = babyServicesAll.filter(srv => {
+    try {
+      const pkgs = Array.isArray(srv.packages)
+        ? srv.packages
+        : (typeof srv.packages === 'string' && srv.packages.trim() ? JSON.parse(srv.packages) : []);
+      return pkgs.length > 0;
+    } catch (_) { return false; }
+  });
+
   const momServices = dbServices.filter(s => s.category === 'mom');
   const lactationServices = dbServices.filter(s => s.category === 'lactation');
+  const newbornServices = dbServices.filter(s => s.category === 'newborn');
 
   const finalBabyServices = babyServices.length > 0 ? babyServices : fallbackBabyServices;
   const finalMomServices = momServices.length > 0 ? momServices : fallbackMomServices;
   const finalLactationServices = lactationServices.length > 0 ? lactationServices : fallbackLactationServices;
+
+  // Newborn Care fallback
+  const fallbackNewbornServices = [
+    {
+      icon: '👶',
+      name: 'Perawatan Bayi Baru Lahir (Homecare)',
+      description: 'Layanan kunjungan ke rumah untuk perawatan bayi baru lahir, meliputi: Perawatan tali pusat, Memandikan bayi, Baby massage, Jemur bayi newborn, Potong kuku bayi, Cukur bayi.',
+      packages: [
+        { label: 'Paket 3 Hari', price: 350000 },
+        { label: 'Paket 5 Hari', price: 605000 },
+        { label: 'Paket 7 Hari', price: 825000 },
+        { label: 'Paket 10 Hari', price: 1145000 },
+        { label: 'Paket 15 Hari', price: 1655000 },
+        { label: 'Paket 20 Hari', price: 2260000 },
+        { label: 'Paket 30 Hari', price: 3255000 },
+      ]
+    }
+  ];
+
+  const finalNewbornServices = newbornServices.length > 0 ? newbornServices : fallbackNewbornServices;
 
   return (
     <div>
@@ -217,16 +259,8 @@ export default function Layanan() {
                 </div>
               </div>
             ))}
-
             {/* Render any baby services from DB that have packages (homecare-grid style) */}
-            {babyServices.filter(srv => {
-              try {
-                const pkgs = Array.isArray(srv.packages)
-                  ? srv.packages
-                  : (typeof srv.packages === 'string' && srv.packages.trim() ? JSON.parse(srv.packages) : []);
-                return pkgs.length > 0;
-              } catch (_) { return false; }
-            }).map((srv, i) => {
+            {babyServicesPackages.map((srv, i) => {
               let pkgs = [];
               try {
                 pkgs = Array.isArray(srv.packages) ? srv.packages : JSON.parse(srv.packages);
@@ -254,44 +288,66 @@ export default function Layanan() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      </section>
 
-            {/* Perawatan Bayi Baru Lahir — shown only when using fallback (no DB data) */}
-            {babyServices.length === 0 && (
-              <div className="homecare-container animate-on-scroll">
-                <div className="homecare-header">
-                  <div className="service-detail-icon">👶</div>
-                  <div className="homecare-title-info">
-                    <h3>Perawatan Bayi Baru Lahir (Homecare)</h3>
-                    <p>Layanan kunjungan ke rumah untuk perawatan bayi baru lahir, meliputi: Perawatan tali pusat, Memandikan bayi, Baby massage, Jemur bayi newborn, Potong kuku bayi, Cukur bayi.</p>
-                  </div>
-                </div>
-                <div className="homecare-grid">
-                  {[
-                    { label: 'Paket 3 Hari', price: 350000 },
-                    { label: 'Paket 5 Hari', price: 605000 },
-                    { label: 'Paket 7 Hari', price: 825000 },
-                    { label: 'Paket 10 Hari', price: 1145000 },
-                    { label: 'Paket 15 Hari', price: 1655000 },
-                    { label: 'Paket 20 Hari', price: 2260000 },
-                    { label: 'Paket 30 Hari', price: 3255000 },
-                  ].map((pkg, i) => (
-                    <div className="homecare-item" key={i}>
-                      <div className="homecare-icon">🏠</div>
-                      <div className="homecare-info">
-                        <span className="homecare-days">{pkg.label}</span>
-                        <span className="homecare-price">{formatPrice(pkg.price)}</span>
-                      </div>
+      {/* Perawatan Bayi Baru Lahir */}
+      <section className="section section-alt">
+        <div className="container">
+          <div className="service-category-header animate-on-scroll">
+            <h2>👶 Perawatan Bayi Baru Lahir</h2>
+            <p>Layanan perawatan dan pendampingan terbaik untuk buah hati yang baru lahir</p>
+          </div>
+          <div id="newbornServicesContainer" style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+            {finalNewbornServices.map((srv, i) => {
+              let pkgs = [];
+              try {
+                pkgs = Array.isArray(srv.packages) ? srv.packages : (typeof srv.packages === 'string' && srv.packages.trim() ? JSON.parse(srv.packages) : []);
+              } catch (_) {}
+
+              return (
+                <div className="homecare-container animate-on-scroll" key={i}>
+                  <div className="homecare-header">
+                    <div className="service-detail-icon">{srv.icon || '👶'}</div>
+                    <div className="homecare-title-info">
+                      <h3>{srv.name}</h3>
+                      <p>{srv.description}</p>
                     </div>
-                  ))}
+                  </div>
+                  {pkgs.length > 0 ? (
+                    <div className="homecare-grid" style={{ padding: '0 24px 24px' }}>
+                      {pkgs.map((pkg, pi) => (
+                        <div className="homecare-item" key={pi}>
+                          <div className="homecare-icon">🏠</div>
+                          <div className="homecare-info">
+                            <span className="homecare-days">{pkg.label}</span>
+                            <span className="homecare-price">{formatPrice(pkg.price)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="price-row" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '12px', padding: '0 24px 24px' }}>
+                      <div className="simple-price" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'var(--pink-50)', padding: '6px 12px', borderRadius: 'var(--radius-full)', fontSize: '0.82rem', color: 'var(--pink-700)', fontWeight: 600 }}>
+                        🏠 Homecare: {formatPrice(srv.price)}
+                      </div>
+                      {srv.price_clinic > 0 && (
+                        <div className="simple-price" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(236, 72, 153, 0.08)', padding: '6px 12px', borderRadius: 'var(--radius-full)', fontSize: '0.82rem', color: 'var(--pink-700)', fontWeight: 600 }}>
+                          🏥 Clinic: {formatPrice(srv.price_clinic)}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
+              );
+            })}
           </div>
         </div>
       </section>
 
       {/* Pelayanan Ibu */}
-      <section className="section section-alt">
+      <section className="section">
         <div className="container">
           <div className="service-category-header animate-on-scroll">
             <h2>🤍 Pelayanan Ibu <br className="br-mobile" /> (Mom Care)</h2>
