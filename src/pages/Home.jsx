@@ -134,10 +134,9 @@ export default function Home() {
             <div className="hero-badge">
               <span>💗</span> Mom & Baby Care Terpercaya
             </div>
-            <h1>Perawatan <span className="highlight">Aman dan Nyaman</span> untuk Ibu dan Bayi</h1>
+            <h1>Perawatan <span className="highlight">Aman dan Nyaman</span><br className="br-mobile" /> untuk Ibu dan Bayi</h1>
             <p className="hero-subtitle animate-on-scroll">
-              Intan Miracle hadir untuk menemani masa emas<br className="br-mobile" /> ibu dan bayi dengan perawatan
-              profesional,<br className="br-mobile" /> aman, dan nyaman.
+              Intan Miracle hadir<br className="br-mobile" /> untuk menemani masa emas<br className="br-mobile" /> ibu dan bayi dengan perawatan<br className="br-mobile" /> profesional, aman, dan nyaman.
             </p>
             <div className="hero-buttons">
               <Link to="/reservasi" className="btn btn-primary btn-lg">
@@ -210,7 +209,7 @@ export default function Home() {
         <div className="container">
           <div className="section-header animate-on-scroll">
             <h2>Momen Intan Miracle</h2>
-            <p>Intipan kecil dari pelayanan penuh kasih kami untuk<br className="br-mobile" /> ibu dan buah hati</p>
+            <p>Intipan kecil dari pelayanan<br className="br-mobile" /> penuh kasih kami untuk ibu<br className="br-mobile" /> dan buah hati</p>
           </div>
           <div className="momen-grid">
             <div className="gallery-item animate-on-scroll">

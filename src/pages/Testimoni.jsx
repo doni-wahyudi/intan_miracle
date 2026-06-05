@@ -193,8 +193,8 @@ export default function Testimoni() {
       {/* Page Header */}
       <section className="page-header">
         <div className="container">
-          <h1 className="text-gradient">Cerita Bahagia dari Para Ibu</h1>
-          <p>Dengarkan langsung pengalaman para ibu<br className="br-mobile" /> yang telah mempercayakan<br className="br-desktop" /> perawatan<br className="br-mobile" /> kepada Intan Miracle</p>
+          <h1 className="text-gradient">Cerita Bahagia<br className="br-mobile" /> dari Para Ibu</h1>
+          <p>Dengarkan langsung<br className="br-mobile" /> pengalaman para ibu yang telah<br className="br-mobile" /> mempercayakan perawatan<br className="br-mobile" /> kepada Intan Miracle</p>
         </div>
       </section>
 
@@ -224,7 +224,7 @@ export default function Testimoni() {
       <section className="screenshot-slider-section">
         <div className="container">
           <div className="section-header animate-on-scroll">
-            <h2 className="text-gradient">Momen Bahagia Bersama<br className="br-mobile" /> Ibu & Bayi</h2>
+            <h2 className="text-gradient">Momen Bahagia<br className="br-mobile" /> Bersama Ibu & Bayi</h2>
             <p>Kumpulan kesan positif dari percakapan hangat bersama para pelanggan kami</p>
           </div>
 
@@ -262,7 +262,7 @@ export default function Testimoni() {
       {/* CTA */}
       <section className="cta-section">
         <div className="container">
-          <h2>Ingin Merasakan Pengalaman<br className="br-mobile" /> yang Sama?</h2>
+          <h2>Ingin Merasakan<br className="br-mobile" /> Pengalaman yang Sama?</h2>
           <p>Bergabunglah dengan ratusan ibu yang telah mempercayakan perawatan kepada kami.</p>
           <Link to="/reservasi" className="btn btn-lg">👉 Reservasi Sekarang</Link>
         </div>

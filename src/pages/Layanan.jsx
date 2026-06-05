@@ -212,7 +212,7 @@ export default function Layanan() {
         <div className="container">
           <div className="service-category-header animate-on-scroll">
             <h2>👶 Pelayanan Bayi</h2>
-            <p>Stimulasi dan relaksasi terbaik untuk tumbuh<br className="br-mobile" /> kembang buah hati</p>
+            <p>Stimulasi dan relaksasi<br className="br-mobile" /> terbaik untuk tumbuh kembang<br className="br-mobile" /> buah hati</p>
           </div>
           <div id="babyServicesContainer">
             {finalBabyServices.map((srv, i) => (
@@ -227,20 +227,24 @@ export default function Layanan() {
                   ) : (parseFloat(srv.price_age_0_1) > 0 || parseFloat(srv.price_age_1_2) > 0 || parseFloat(srv.price_age_2_plus) > 0) ? (
                     <div className="price-row" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
                       {/* Homecare Prices */}
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--pink-700)', minWidth: '90px' }}>🏠 Homecare:</span>
-                        <div className="simple-price" style={{ fontSize: '0.8rem', padding: '4px 10px', background: 'var(--pink-50)', color: 'var(--pink-700)', borderRadius: 'var(--radius-full)' }}><span className="price-label">0-1th:</span> {formatPrice(srv.price_age_0_1)}</div>
-                        <div className="simple-price" style={{ fontSize: '0.8rem', padding: '4px 10px', background: 'var(--pink-50)', color: 'var(--pink-700)', borderRadius: 'var(--radius-full)' }}><span className="price-label">1-2th:</span> {formatPrice(srv.price_age_1_2)}</div>
-                        <div className="simple-price" style={{ fontSize: '0.8rem', padding: '4px 10px', background: 'var(--pink-50)', color: 'var(--pink-700)', borderRadius: 'var(--radius-full)' }}><span className="price-label">&gt;2th:</span> {formatPrice(srv.price_age_2_plus)}</div>
+                      <div className="age-price-group">
+                        <span className="age-price-label">🏠 Homecare:</span>
+                        <div className="age-price-badges">
+                          <div className="simple-price age-price-badge"><span className="price-label">0-1th:</span> {formatPrice(srv.price_age_0_1)}</div>
+                          <div className="simple-price age-price-badge"><span className="price-label">1-2th:</span> {formatPrice(srv.price_age_1_2)}</div>
+                          <div className="simple-price age-price-badge"><span className="price-label">&gt;2th:</span> {formatPrice(srv.price_age_2_plus)}</div>
+                        </div>
                       </div>
                       
                       {/* Clinic Care Prices */}
                       {parseFloat(srv.price_clinic_age_0_1) > 0 && (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', marginTop: '4px' }}>
-                          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--pink-700)', minWidth: '90px' }}>🏥 Clinic Care:</span>
-                          <div className="simple-price" style={{ fontSize: '0.8rem', padding: '4px 10px', background: 'rgba(236, 72, 153, 0.08)', color: 'var(--pink-700)', borderRadius: 'var(--radius-full)' }}><span className="price-label">0-1th:</span> {formatPrice(srv.price_clinic_age_0_1)}</div>
-                          <div className="simple-price" style={{ fontSize: '0.8rem', padding: '4px 10px', background: 'rgba(236, 72, 153, 0.08)', color: 'var(--pink-700)', borderRadius: 'var(--radius-full)' }}><span className="price-label">1-2th:</span> {formatPrice(srv.price_clinic_age_1_2)}</div>
-                          <div className="simple-price" style={{ fontSize: '0.8rem', padding: '4px 10px', background: 'rgba(236, 72, 153, 0.08)', color: 'var(--pink-700)', borderRadius: 'var(--radius-full)' }}><span className="price-label">&gt;2th:</span> {formatPrice(srv.price_clinic_age_2_plus)}</div>
+                        <div className="age-price-group" style={{ marginTop: '4px' }}>
+                          <span className="age-price-label">🏥 Clinic Care:</span>
+                          <div className="age-price-badges">
+                            <div className="simple-price age-price-badge clinic-badge"><span className="price-label">0-1th:</span> {formatPrice(srv.price_clinic_age_0_1)}</div>
+                            <div className="simple-price age-price-badge clinic-badge"><span className="price-label">1-2th:</span> {formatPrice(srv.price_clinic_age_1_2)}</div>
+                            <div className="simple-price age-price-badge clinic-badge"><span className="price-label">&gt;2th:</span> {formatPrice(srv.price_clinic_age_2_plus)}</div>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -316,7 +320,7 @@ export default function Layanan() {
                     </div>
                   </div>
                   {pkgs.length > 0 ? (
-                    <div className="homecare-grid" style={{ padding: '0 24px 24px' }}>
+                    <div className="homecare-grid">
                       {pkgs.map((pkg, pi) => (
                         <div className="homecare-item" key={pi}>
                           <div className="homecare-icon">🏠</div>
@@ -328,7 +332,7 @@ export default function Layanan() {
                       ))}
                     </div>
                   ) : (
-                    <div className="price-row" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '12px', padding: '0 24px 24px' }}>
+                    <div className="price-row homecare-fallback-price">
                       <div className="simple-price" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'var(--pink-50)', padding: '6px 12px', borderRadius: 'var(--radius-full)', fontSize: '0.82rem', color: 'var(--pink-700)', fontWeight: 600 }}>
                         🏠 Homecare: {formatPrice(srv.price)}
                       </div>
@@ -411,7 +415,7 @@ export default function Layanan() {
       {/* CTA */}
       <section className="cta-section">
         <div className="container">
-          <h2>Butuh Perawatan untuk Ibu atau Bayi?</h2>
+          <h2>Butuh Perawatan untuk<br className="br-mobile" /> Ibu atau Bayi?</h2>
           <p>Hubungi kami untuk konsultasi gratis <br className="br-mobile" /> dan reservasi layanan.</p>
           <Link to="/reservasi" className="btn btn-lg">👉 Reservasi Sekarang</Link>
         </div>

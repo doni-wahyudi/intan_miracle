@@ -393,6 +393,7 @@ textarea {
   color: var(--text-secondary);
   transition: all var(--transition-fast);
   position: relative;
+  white-space: nowrap;
 }
 
 .navbar-nav a:hover,
@@ -1518,6 +1519,7 @@ textarea {
   padding: 6px 14px;
   border-radius: var(--radius-md);
   border: 1px solid var(--pink-100);
+  white-space: nowrap;
 }
 
 .price-label {
@@ -1526,6 +1528,38 @@ textarea {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-right: 4px;
+}
+
+.age-price-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.age-price-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--pink-700);
+  min-width: 90px;
+}
+
+.age-price-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.age-price-badge {
+  font-size: 0.8rem !important;
+  padding: 4px 10px !important;
+  background: var(--pink-50) !important;
+  color: var(--pink-700) !important;
+  border-radius: var(--radius-full) !important;
+}
+
+.clinic-badge {
+  background: rgba(236, 72, 153, 0.08) !important;
 }
 
 /* --- Homecare Table --- */
@@ -1568,6 +1602,12 @@ textarea {
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 16px;
   margin-top: 24px;
+  padding: 0 24px 24px;
+}
+
+.homecare-fallback-price {
+  padding: 0 24px 24px;
+  margin-top: 12px;
 }
 
 .homecare-item {
@@ -2454,11 +2494,7 @@ textarea {
   }
 }
 
-@media (max-width: 768px) {
-  :root {
-    --section-py: 70px;
-  }
-
+@media (max-width: 1024px) {
   .navbar-nav {
     position: fixed;
     top: 0;
@@ -2506,6 +2542,12 @@ textarea {
     opacity: 1;
     visibility: visible;
   }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --section-py: 70px;
+  }
 
   .hero h1 {
     font-size: 2rem;
@@ -2530,8 +2572,10 @@ textarea {
   }
 
   .service-detail {
-    grid-template-columns: 1fr;
-    padding: 32px;
+    flex-direction: column;
+    text-align: center;
+    padding: 32px 24px;
+    gap: 20px;
   }
 
   .service-detail-icon {
@@ -2574,9 +2618,36 @@ textarea {
   }
 
   /* Compact Homecare Grid for Mobile */
+  .homecare-container {
+    padding: 24px 16px;
+  }
+
   .homecare-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;
+    padding: 0;
+  }
+
+  .homecare-fallback-price {
+    padding: 0;
+    margin-top: 8px;
+  }
+
+  .price-row {
+    justify-content: center;
+  }
+
+  .age-price-group {
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .age-price-badges {
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+    width: 100%;
   }
 
   .homecare-item {
@@ -2792,5 +2863,16 @@ textarea {
   }
   .featured-article-body {
     padding: 24px;
+  }
+}
+
+/* Landscape Tablet Adjustments for Navbar */
+@media (min-width: 1025px) and (max-width: 1200px) {
+  .navbar-nav {
+    gap: 4px;
+  }
+  .navbar-nav a {
+    padding: 8px 10px;
+    font-size: 0.88rem;
   }
 }
