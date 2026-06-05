@@ -2787,4 +2787,10 @@ textarea {
   .auth-card, .profile-card {
     padding: 24px;
   }
+  .featured-article-image {
+    height: 240px;
+  }
+  .featured-article-body {
+    padding: 24px;
+  }
 }

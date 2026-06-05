@@ -328,6 +328,31 @@ export default function Admin() {
 
     const dataPayload = { ...formFields };
     
+    // Sanitize and parse all numeric columns for services table
+    if (currentTab === 'layanan') {
+      const numericFields = [
+        'price', 'price_clinic',
+        'price_age_0_1', 'price_age_1_2', 'price_age_2_plus',
+        'price_clinic_age_0_1', 'price_clinic_age_1_2', 'price_clinic_age_2_plus'
+      ];
+      numericFields.forEach(field => {
+        if (dataPayload[field] === '' || dataPayload[field] === undefined || dataPayload[field] === null) {
+          dataPayload[field] = 0;
+        } else {
+          dataPayload[field] = parseFloat(dataPayload[field]) || 0;
+        }
+      });
+    }
+    if (currentTab === 'testimoni') {
+      dataPayload.stars = parseInt(dataPayload.stars) || 5;
+    }
+    if (currentTab === 'sertifikat' || currentTab === 'program' || currentTab === 'terapis') {
+      dataPayload.sort_order = parseInt(dataPayload.sort_order) || 0;
+    }
+    if (currentTab === 'program') {
+      dataPayload.discount_percent = parseFloat(dataPayload.discount_percent) || 0;
+    }
+    
     // Differentiate price management based on baby vs non-baby categories and packages
     if (currentTab === 'layanan') {
       const selectedTipe = dataPayload.tipe_harga || 'flat';
@@ -1237,7 +1262,7 @@ export default function Admin() {
                               );
                             }
 
-                            if (srv.category === 'baby') {
+                            if (srv.price_age_0_1 > 0 || srv.price_age_1_2 > 0 || srv.price_age_2_plus > 0) {
                               return (
                                 <>
                                   <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>🏠 Usia (Homecare):</div>
@@ -1523,7 +1548,7 @@ export default function Admin() {
                   </div>
 
                   {/* Split QR Codes */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px' }}>
                     {/* Reservasi QR */}
                     <div className="admin-card" style={{ padding: '28px 20px', textAlign: 'center' }}>
                       <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📅</div>
@@ -1708,47 +1733,47 @@ export default function Admin() {
                         <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--pink-700)' }}>👶 Atur Harga Berdasarkan Usia (Homecare & Clinic Care)</div>
                         
                         {/* Homecare Prices Grid */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
                           <div className="form-group" style={{ margin: 0 }}>
                             <label style={{ fontSize: '0.78rem', fontWeight: 600 }}>0-1th (Homecare)</label>
-                            <input type="number" className="form-control" style={{ fontSize: '0.82rem', padding: '6px 8px' }} value={formFields.price_age_0_1 || 0} onChange={(e) => updateField('price_age_0_1', parseFloat(e.target.value))} />
+                            <input type="number" className="form-control" style={{ fontSize: '0.82rem', padding: '6px 8px' }} value={formFields.price_age_0_1 ?? ''} onChange={(e) => updateField('price_age_0_1', e.target.value)} onFocus={(e) => e.target.select()} />
                           </div>
                           <div className="form-group" style={{ margin: 0 }}>
                             <label style={{ fontSize: '0.78rem', fontWeight: 600 }}>1-2th (Homecare)</label>
-                            <input type="number" className="form-control" style={{ fontSize: '0.82rem', padding: '6px 8px' }} value={formFields.price_age_1_2 || 0} onChange={(e) => updateField('price_age_1_2', parseFloat(e.target.value))} />
+                            <input type="number" className="form-control" style={{ fontSize: '0.82rem', padding: '6px 8px' }} value={formFields.price_age_1_2 ?? ''} onChange={(e) => updateField('price_age_1_2', e.target.value)} onFocus={(e) => e.target.select()} />
                           </div>
                           <div className="form-group" style={{ margin: 0 }}>
                             <label style={{ fontSize: '0.78rem', fontWeight: 600 }}>&gt;2th (Homecare)</label>
-                            <input type="number" className="form-control" style={{ fontSize: '0.82rem', padding: '6px 8px' }} value={formFields.price_age_2_plus || 0} onChange={(e) => updateField('price_age_2_plus', parseFloat(e.target.value))} />
+                            <input type="number" className="form-control" style={{ fontSize: '0.82rem', padding: '6px 8px' }} value={formFields.price_age_2_plus ?? ''} onChange={(e) => updateField('price_age_2_plus', e.target.value)} onFocus={(e) => e.target.select()} />
                           </div>
                         </div>
 
                         {/* Clinic Care Prices Grid */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginTop: '4px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px', marginTop: '4px' }}>
                           <div className="form-group" style={{ margin: 0 }}>
                             <label style={{ fontSize: '0.78rem', fontWeight: 600 }}>0-1th (Clinic Care)</label>
-                            <input type="number" className="form-control" style={{ fontSize: '0.82rem', padding: '6px 8px' }} value={formFields.price_clinic_age_0_1 || 0} onChange={(e) => updateField('price_clinic_age_0_1', parseFloat(e.target.value))} />
+                            <input type="number" className="form-control" style={{ fontSize: '0.82rem', padding: '6px 8px' }} value={formFields.price_clinic_age_0_1 ?? ''} onChange={(e) => updateField('price_clinic_age_0_1', e.target.value)} onFocus={(e) => e.target.select()} />
                           </div>
                           <div className="form-group" style={{ margin: 0 }}>
                             <label style={{ fontSize: '0.78rem', fontWeight: 600 }}>1-2th (Clinic Care)</label>
-                            <input type="number" className="form-control" style={{ fontSize: '0.82rem', padding: '6px 8px' }} value={formFields.price_clinic_age_1_2 || 0} onChange={(e) => updateField('price_clinic_age_1_2', parseFloat(e.target.value))} />
+                            <input type="number" className="form-control" style={{ fontSize: '0.82rem', padding: '6px 8px' }} value={formFields.price_clinic_age_1_2 ?? ''} onChange={(e) => updateField('price_clinic_age_1_2', e.target.value)} onFocus={(e) => e.target.select()} />
                           </div>
                           <div className="form-group" style={{ margin: 0 }}>
                             <label style={{ fontSize: '0.78rem', fontWeight: 600 }}>&gt;2th (Clinic Care)</label>
-                            <input type="number" className="form-control" style={{ fontSize: '0.82rem', padding: '6px 8px' }} value={formFields.price_clinic_age_2_plus || 0} onChange={(e) => updateField('price_clinic_age_2_plus', parseFloat(e.target.value))} />
+                            <input type="number" className="form-control" style={{ fontSize: '0.82rem', padding: '6px 8px' }} value={formFields.price_clinic_age_2_plus ?? ''} onChange={(e) => updateField('price_clinic_age_2_plus', e.target.value)} onFocus={(e) => e.target.select()} />
                           </div>
                         </div>
                       </div>
                     )}
                     {formFields.tipe_harga === 'flat' && (
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
                         <div className="form-group">
                           <label>Harga Homecare (IDR)</label>
-                          <input type="number" className="form-control" value={formFields.price || 0} onChange={(e) => updateField('price', parseFloat(e.target.value))} required />
+                          <input type="number" className="form-control" value={formFields.price ?? ''} onChange={(e) => updateField('price', e.target.value)} onFocus={(e) => e.target.select()} required />
                         </div>
                         <div className="form-group">
                           <label>Harga Clinic Care (IDR, Opsional)</label>
-                          <input type="number" className="form-control" value={formFields.price_clinic || 0} onChange={(e) => updateField('price_clinic', parseFloat(e.target.value))} />
+                          <input type="number" className="form-control" value={formFields.price_clinic ?? ''} onChange={(e) => updateField('price_clinic', e.target.value)} onFocus={(e) => e.target.select()} />
                         </div>
                       </div>
                     )}
@@ -1809,12 +1834,13 @@ export default function Admin() {
                                 type="number"
                                 className="form-control"
                                 placeholder="Harga (IDR)"
-                                value={pkg.price}
+                                value={pkg.price ?? ''}
                                 onChange={(e) => {
                                   const updated = [...pkgs];
-                                  updated[idx] = { ...updated[idx], price: parseFloat(e.target.value) || 0 };
+                                  updated[idx] = { ...updated[idx], price: e.target.value };
                                   updatePkgs(updated);
                                 }}
+                                onFocus={(e) => e.target.select()}
                                 style={{ fontSize: '0.82rem', padding: '6px 8px', margin: 0 }}
                                 required
                               />

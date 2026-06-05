@@ -256,21 +256,10 @@ export default function Tentang() {
               <h3>Bdn. Intan Purnama Sari, S.Keb., CBMT</h3>
               <div className="owner-title">Owner & Lead Therapist — Intan Miracle</div>
               <p>
-                <strong>Bdn. Intan Purnama Sari, S.Keb., CBMT</strong> adalah seorang bidan profesional yang
-                telah mendedikasikan dirinya di dunia kesehatan ibu dan anak sejak tahun 2017. Guna memberikan
-                perawatan yang lebih optimal dan terspesialisasi, beliau juga memperdalam keahliannya dengan
-                mengambil sertifikasi <em>Certified Baby and Mom Therapist</em> pada tahun 2019.
+                <strong>Bdn. Intan Purnama Sari, S.Keb., CBMT</strong> adalah bidan profesional sejak 2017 yang juga memegang sertifikasi Certified Baby and Mom Therapist sejak 2019. Dengan pengalaman menangani lebih dari 1.000 tindakan, beliau sangat ahli dalam pelayanan kebidanan medis mulai dari persalinan, pemeriksaan kehamilan, perawatan ibu nifas, hingga layanan imunisasi, KB, dan tindik steril.
               </p>
               <p>
-                Dengan pengalaman hampir satu dekade, Bidan Intan telah sukses menangani lebih dari
-                <strong> 1.000 tindakan</strong> yang mencakup penanganan persalinan, pemeriksaan kehamilan,
-                perawatan bayi baru lahir, hingga perawatan ibu nifas. Selain tindakan medis kebidanan seperti
-                imunisasi, KB, dan tindik steril, beliau juga sangat ahli dalam memberikan terapi relaksasi
-                seperti pijat bayi, baby spa, serta pijat laktasi untuk membantu kelancaran ASI para busui.
-              </p>
-              <p>
-                Kombinasi antara ilmu kebidanan resmi dan keahlian terapi bersertifikat ini menjadikannya sosok
-                yang siap memberikan perawatan terbaik, aman, dan penuh kasih sayang untuk Anda dan Si Kecil.
+                Selain tindakan medis kebidanan, Bidan Intan juga merupakan spesialis dalam terapi relaksasi ibu dan anak, seperti pijat bayi, baby spa, serta pijat laktasi untuk kelancaran ASI. Kombinasi antara ilmu kebidanan resmi dan keahlian terapi bersertifikat ini menjadikannya sosok terpercaya yang siap memberikan perawatan terbaik, aman, dan penuh kasih sayang untuk Anda dan Si Kecil.
               </p>
               <div className="owner-highlights">
                 <div className="owner-highlight-item">

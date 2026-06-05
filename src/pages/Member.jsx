@@ -36,6 +36,17 @@ const STATUS_IBU_LABEL = {
   umum: 'Umum',
 };
 
+// Profile info row helper defined at module level to prevent remounting
+const InfoRow = ({ icon, label, value }) => (
+  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '10px 0', borderBottom: '1px solid var(--pink-100)' }}>
+    <span style={{ fontSize: '1.1rem', minWidth: '26px', textAlign: 'center' }}>{icon}</span>
+    <div>
+      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>{label}</div>
+      <div style={{ fontSize: '0.9rem', color: value ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: 500 }}>{value || 'Belum diisi'}</div>
+    </div>
+  </div>
+);
+
 export default function Member() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('login'); // 'login' | 'register'
@@ -274,256 +285,6 @@ export default function Member() {
     );
   }
 
-  // Profile info row helper
-  const InfoRow = ({ icon, label, value }) => (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '10px 0', borderBottom: '1px solid var(--pink-100)' }}>
-      <span style={{ fontSize: '1.1rem', minWidth: '26px', textAlign: 'center' }}>{icon}</span>
-      <div>
-        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>{label}</div>
-        <div style={{ fontSize: '0.9rem', color: value ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: 500 }}>{value || 'Belum diisi'}</div>
-      </div>
-    </div>
-  );
-
-  /* ──────────────────────── PROFILE FORM ──────────────────────── */
-  const ProfileForm = () => (
-    <div className="profile-card" style={{ maxWidth: '860px', margin: '0 auto' }}>
-      <div className="profile-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap', gap: '16px' }}>
-        <div>
-          <h2>{!hasProfile ? '👋 Selamat Datang, Member Baru!' : '✏️ Edit Profil'}</h2>
-          <p style={{ color: 'var(--text-secondary)' }}>{session.user.email}</p>
-        </div>
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          {hasProfile && (
-            <button onClick={() => setEditMode(false)} className="btn btn-secondary">← Kembali</button>
-          )}
-          <button onClick={handleLogout} className="btn btn-secondary">Keluar</button>
-        </div>
-      </div>
-
-      <form onSubmit={handleProfileUpdate} className="form-card">
-        <h3 style={{ marginBottom: '6px' }}>📝 {!hasProfile ? 'Lengkapi Data Member' : 'Perbarui Data'}</h3>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '28px' }}>
-          Data ini memudahkan proses reservasi dan membantu kami memberikan pelayanan terbaik.
-        </p>
-
-        {/* ── SECTION: DATA IBU ── */}
-        <div style={{ marginBottom: '24px' }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '10px',
-            marginBottom: '16px', paddingBottom: '10px',
-            borderBottom: '2px solid var(--pink-100)'
-          }}>
-            <span style={{ fontSize: '1.3rem' }}>👩</span>
-            <h4 style={{ margin: 0, color: 'var(--pink-700)', fontSize: '1rem', fontWeight: 700 }}>Data Ibu</h4>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="profNamaIbu">Nama Lengkap Ibu <span style={{ color: 'var(--pink-500)' }}>*</span></label>
-              <input
-                type="text"
-                id="profNamaIbu"
-                placeholder="Nama lengkap Anda"
-                value={namaIbu}
-                onChange={(e) => setNamaIbu(e.target.value)}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="profWhatsapp">Nomor WhatsApp</label>
-              <input
-                type="tel"
-                id="profWhatsapp"
-                placeholder="08xx-xxxx-xxxx"
-                value={whatsapp}
-                onChange={(e) => setWhatsapp(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="profStatusIbu">Status Ibu Saat Ini</label>
-              <select
-                id="profStatusIbu"
-                value={statusIbu}
-                onChange={(e) => { setStatusIbu(e.target.value); if (e.target.value !== 'hamil') setUsiaKandungan(''); }}
-              >
-                {STATUS_IBU_OPTIONS.map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-            </div>
-            {statusIbu === 'hamil' && (
-              <div className="form-group">
-                <label htmlFor="profUsiaKandungan">Usia Kandungan (minggu)</label>
-                <input
-                  type="number"
-                  id="profUsiaKandungan"
-                  placeholder="Contoh: 28"
-                  min="1"
-                  max="42"
-                  value={usiaKandungan}
-                  onChange={(e) => setUsiaKandungan(e.target.value)}
-                />
-              </div>
-            )}
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="profTanggalLahirIbu">Tanggal Lahir Ibu</label>
-              <input
-                type="date"
-                id="profTanggalLahirIbu"
-                value={tanggalLahirIbu}
-                onChange={(e) => setTanggalLahirIbu(e.target.value)}
-              />
-              <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
-                🎂 Untuk promo ulang tahun eksklusif
-              </small>
-            </div>
-          </div>
-        </div>
-
-        {/* ── SECTION: DATA BAYI ── */}
-        <div style={{ marginBottom: '24px' }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '10px',
-            marginBottom: '16px', paddingBottom: '10px',
-            borderBottom: '2px solid var(--pink-100)'
-          }}>
-            <span style={{ fontSize: '1.3rem' }}>👶</span>
-            <h4 style={{ margin: 0, color: 'var(--pink-700)', fontSize: '1rem', fontWeight: 700 }}>Data Bayi</h4>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="profNamaBayi">Nama Bayi</label>
-              <input
-                type="text"
-                id="profNamaBayi"
-                placeholder="Nama si kecil"
-                value={namaBayi}
-                onChange={(e) => setNamaBayi(e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="profJenisKelamin">Jenis Kelamin Bayi</label>
-              <select
-                id="profJenisKelamin"
-                value={jenisKelaminBayi}
-                onChange={(e) => setJenisKelaminBayi(e.target.value)}
-              >
-                <option value="">— Pilih —</option>
-                <option value="Laki-laki">Laki-laki</option>
-                <option value="Perempuan">Perempuan</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="profTanggalLahirBayi">Tanggal Lahir Bayi</label>
-              <input
-                type="date"
-                id="profTanggalLahirBayi"
-                value={tanggalLahirBayi}
-                max={new Date().toISOString().split('T')[0]}
-                onChange={(e) => setTanggalLahirBayi(e.target.value)}
-              />
-              {usiaBayiComputed && (
-                <div style={{
-                  marginTop: '8px',
-                  background: 'linear-gradient(135deg, var(--pink-50), #fff0f8)',
-                  border: '1px solid var(--pink-200)',
-                  borderRadius: '8px',
-                  padding: '8px 12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  fontSize: '0.85rem',
-                  color: 'var(--pink-700)',
-                  fontWeight: 600,
-                }}>
-                  🍼 Usia saat ini: <span style={{ color: 'var(--pink-600)', fontWeight: 700 }}>{usiaBayiComputed}</span>
-                </div>
-              )}
-            </div>
-            <div className="form-group">
-              <label htmlFor="profBeratBadan">Berat Badan Bayi (kg)</label>
-              <input
-                type="number"
-                id="profBeratBadan"
-                placeholder="Contoh: 5.5"
-                min="0"
-                max="30"
-                step="0.1"
-                value={beratBadanBayi}
-                onChange={(e) => setBeratBadanBayi(e.target.value)}
-              />
-              <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
-                ⚖️ Penting untuk keamanan layanan baby swim
-              </small>
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="profCatatanMedis">Catatan Medis & Alergi</label>
-            <textarea
-              id="profCatatanMedis"
-              rows="3"
-              placeholder="Contoh: kulit sensitif, alergi susu sapi, riwayat kejang demam, dll. Kosongkan jika tidak ada."
-              value={catatanMedis}
-              onChange={(e) => setCatatanMedis(e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* ── SECTION: ALAMAT ── */}
-        <div style={{ marginBottom: '24px' }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '10px',
-            marginBottom: '16px', paddingBottom: '10px',
-            borderBottom: '2px solid var(--pink-100)'
-          }}>
-            <span style={{ fontSize: '1.3rem' }}>📍</span>
-            <h4 style={{ margin: 0, color: 'var(--pink-700)', fontSize: '1rem', fontWeight: 700 }}>Alamat</h4>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="profAlamat">Alamat Lengkap</label>
-            <textarea
-              id="profAlamat"
-              rows="3"
-              placeholder="Jl. Contoh No. 1, Kelurahan, Kecamatan, Kota"
-              value={alamat}
-              onChange={(e) => setAlamat(e.target.value)}
-            />
-          </div>
-          <div className="form-row" style={{ maxWidth: '300px' }}>
-            <div className="form-group">
-              <label htmlFor="profKodePos">Kode Pos</label>
-              <input
-                type="text"
-                id="profKodePos"
-                placeholder="Contoh: 12345"
-                maxLength="5"
-                value={kodePos}
-                onChange={(e) => setKodePos(e.target.value.replace(/\D/, ''))}
-              />
-            </div>
-          </div>
-        </div>
-
-        <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={saveLoading}>
-          {saveLoading ? 'Menyimpan...' : '💾 Simpan Profil'}
-        </button>
-      </form>
-    </div>
-  );
-
   /* ──────────────────────── MAIN RENDER ──────────────────────── */
   return (
     <div>
@@ -594,7 +355,241 @@ export default function Member() {
             </div>
 
           ) : !hasProfile || editMode ? (
-            <ProfileForm />
+            <div className="profile-card" style={{ maxWidth: '860px', margin: '0 auto' }}>
+              <div className="profile-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap', gap: '16px' }}>
+                <div>
+                  <h2>{!hasProfile ? '👋 Selamat Datang, Member Baru!' : '✏️ Edit Profil'}</h2>
+                  <p style={{ color: 'var(--text-secondary)' }}>{session.user.email}</p>
+                </div>
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                  {hasProfile && (
+                    <button onClick={() => setEditMode(false)} className="btn btn-secondary">← Kembali</button>
+                  )}
+                  <button onClick={handleLogout} className="btn btn-secondary">Keluar</button>
+                </div>
+              </div>
+
+              <form onSubmit={handleProfileUpdate} className="form-card">
+                <h3 style={{ marginBottom: '6px' }}>📝 {!hasProfile ? 'Lengkapi Data Member' : 'Perbarui Data'}</h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '28px' }}>
+                  Data ini memudahkan proses reservasi dan membantu kami memberikan pelayanan terbaik.
+                </p>
+
+                {/* ── SECTION: DATA IBU ── */}
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: '10px',
+                    marginBottom: '16px', paddingBottom: '10px',
+                    borderBottom: '2px solid var(--pink-100)'
+                  }}>
+                    <span style={{ fontSize: '1.3rem' }}>👩</span>
+                    <h4 style={{ margin: 0, color: 'var(--pink-700)', fontSize: '1rem', fontWeight: 700 }}>Data Ibu</h4>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="profNamaIbu">Nama Lengkap Ibu <span style={{ color: 'var(--pink-500)' }}>*</span></label>
+                      <input
+                        type="text"
+                        id="profNamaIbu"
+                        placeholder="Nama lengkap Anda"
+                        value={namaIbu}
+                        onChange={(e) => setNamaIbu(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="profWhatsapp">Nomor WhatsApp</label>
+                      <input
+                        type="tel"
+                        id="profWhatsapp"
+                        placeholder="08xx-xxxx-xxxx"
+                        value={whatsapp}
+                        onChange={(e) => setWhatsapp(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="profStatusIbu">Status Ibu Saat Ini</label>
+                      <select
+                        id="profStatusIbu"
+                        value={statusIbu}
+                        onChange={(e) => { setStatusIbu(e.target.value); if (e.target.value !== 'hamil') setUsiaKandungan(''); }}
+                      >
+                        {STATUS_IBU_OPTIONS.map(opt => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    {statusIbu === 'hamil' && (
+                      <div className="form-group">
+                        <label htmlFor="profUsiaKandungan">Usia Kandungan (minggu)</label>
+                        <input
+                          type="number"
+                          id="profUsiaKandungan"
+                          placeholder="Contoh: 28"
+                          min="1"
+                          max="42"
+                          value={usiaKandungan}
+                          onChange={(e) => setUsiaKandungan(e.target.value)}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="profTanggalLahirIbu">Tanggal Lahir Ibu</label>
+                      <input
+                        type="date"
+                        id="profTanggalLahirIbu"
+                        value={tanggalLahirIbu}
+                        onChange={(e) => setTanggalLahirIbu(e.target.value)}
+                      />
+                      <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                        🎂 Untuk promo ulang tahun eksklusif
+                      </small>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── SECTION: DATA BAYI ── */}
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: '10px',
+                    marginBottom: '16px', paddingBottom: '10px',
+                    borderBottom: '2px solid var(--pink-100)'
+                  }}>
+                    <span style={{ fontSize: '1.3rem' }}>👶</span>
+                    <h4 style={{ margin: 0, color: 'var(--pink-700)', fontSize: '1rem', fontWeight: 700 }}>Data Bayi</h4>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="profNamaBayi">Nama Bayi</label>
+                      <input
+                        type="text"
+                        id="profNamaBayi"
+                        placeholder="Nama si kecil"
+                        value={namaBayi}
+                        onChange={(e) => setNamaBayi(e.target.value)}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="profJenisKelamin">Jenis Kelamin Bayi</label>
+                      <select
+                        id="profJenisKelamin"
+                        value={jenisKelaminBayi}
+                        onChange={(e) => setJenisKelaminBayi(e.target.value)}
+                      >
+                        <option value="">— Pilih —</option>
+                        <option value="Laki-laki">Laki-laki</option>
+                        <option value="Perempuan">Perempuan</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="profTanggalLahirBayi">Tanggal Lahir Bayi</label>
+                      <input
+                        type="date"
+                        id="profTanggalLahirBayi"
+                        value={tanggalLahirBayi}
+                        max={new Date().toISOString().split('T')[0]}
+                        onChange={(e) => setTanggalLahirBayi(e.target.value)}
+                      />
+                      {usiaBayiComputed && (
+                        <div style={{
+                          marginTop: '8px',
+                          background: 'linear-gradient(135deg, var(--pink-50), #fff0f8)',
+                          border: '1px solid var(--pink-200)',
+                          borderRadius: '8px',
+                          padding: '8px 12px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          fontSize: '0.85rem',
+                          color: 'var(--pink-700)',
+                          fontWeight: 600,
+                        }}>
+                          🍼 Usia saat ini: <span style={{ color: 'var(--pink-600)', fontWeight: 700 }}>{usiaBayiComputed}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="profBeratBadan">Berat Badan Bayi (kg)</label>
+                      <input
+                        type="number"
+                        id="profBeratBadan"
+                        placeholder="Contoh: 5.5"
+                        min="0"
+                        max="30"
+                        step="0.1"
+                        value={beratBadanBayi}
+                        onChange={(e) => setBeratBadanBayi(e.target.value)}
+                      />
+                      <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                        ⚖️ Penting untuk keamanan layanan baby swim
+                      </small>
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="profCatatanMedis">Catatan Medis & Alergi</label>
+                    <textarea
+                      id="profCatatanMedis"
+                      rows="3"
+                      placeholder="Contoh: kulit sensitif, alergi susu sapi, riwayat kejang demam, dll. Kosongkan jika tidak ada."
+                      value={catatanMedis}
+                      onChange={(e) => setCatatanMedis(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {/* ── SECTION: ALAMAT ── */}
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: '10px',
+                    marginBottom: '16px', paddingBottom: '10px',
+                    borderBottom: '2px solid var(--pink-100)'
+                  }}>
+                    <span style={{ fontSize: '1.3rem' }}>📍</span>
+                    <h4 style={{ margin: 0, color: 'var(--pink-700)', fontSize: '1rem', fontWeight: 700 }}>Alamat</h4>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="profAlamat">Alamat Lengkap</label>
+                    <textarea
+                      id="profAlamat"
+                      rows="3"
+                      placeholder="Jl. Contoh No. 1, Kelurahan, Kecamatan, Kota"
+                      value={alamat}
+                      onChange={(e) => setAlamat(e.target.value)}
+                    />
+                  </div>
+                  <div className="form-row" style={{ maxWidth: '300px' }}>
+                    <div className="form-group">
+                      <label htmlFor="profKodePos">Kode Pos</label>
+                      <input
+                        type="text"
+                        id="profKodePos"
+                        placeholder="Contoh: 12345"
+                        maxLength="5"
+                        value={kodePos}
+                        onChange={(e) => setKodePos(e.target.value.replace(/\D/, ''))}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={saveLoading}>
+                  {saveLoading ? 'Menyimpan...' : '💾 Simpan Profil'}
+                </button>
+              </form>
+            </div>
 
           ) : (
             /* Logged In Dashboard */
@@ -658,7 +653,7 @@ export default function Member() {
               )}
 
               {/* Main Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
 
                 {/* Profile Card — Data Ibu */}
                 <div className="profile-card">

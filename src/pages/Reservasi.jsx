@@ -252,7 +252,7 @@ Terima kasih! ✨`;
                 {/* Service Type Toggle */}
                 <div className="form-group">
                   <label>🏥 Tipe Layanan</label>
-                  <div style={{ display: 'flex', gap: '12px', marginTop: '4px' }}>
+                  <div className="grid-2" style={{ gap: '12px', marginTop: '4px' }}>
                     <button
                       type="button"
                       onClick={() => setTipeLayanan('homecare')}

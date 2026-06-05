@@ -224,7 +224,7 @@ export default function Layanan() {
                   {srv.customList}
                   {srv.customPrice ? (
                     srv.customPrice
-                  ) : (srv.category === 'baby' || srv.price_age_0_1 > 0) ? (
+                  ) : (parseFloat(srv.price_age_0_1) > 0 || parseFloat(srv.price_age_1_2) > 0 || parseFloat(srv.price_age_2_plus) > 0) ? (
                     <div className="price-row" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
                       {/* Homecare Prices */}
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
@@ -235,7 +235,7 @@ export default function Layanan() {
                       </div>
                       
                       {/* Clinic Care Prices */}
-                      {srv.price_clinic_age_0_1 > 0 && (
+                      {parseFloat(srv.price_clinic_age_0_1) > 0 && (
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', marginTop: '4px' }}>
                           <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--pink-700)', minWidth: '90px' }}>🏥 Clinic Care:</span>
                           <div className="simple-price" style={{ fontSize: '0.8rem', padding: '4px 10px', background: 'rgba(236, 72, 153, 0.08)', color: 'var(--pink-700)', borderRadius: 'var(--radius-full)' }}><span className="price-label">0-1th:</span> {formatPrice(srv.price_clinic_age_0_1)}</div>
